@@ -14,8 +14,9 @@ class StackSizes:
         Util.Log("----------------------------")
         Util.Log("Starting loop...")
         for key in keys:
+            Util.Log(key + "'s Old Max Uses: " + str(ItemsBlocks.Find(key)._maxUses))
             ItemsBlocks.Find(key)._maxUses = int(ini.GetSetting("Items", key))
-            Util.Log(key + "'s Max Uses: " + str(ItemsBlocks.Find(key)._maxUses))
+            Util.Log(key + "'s New Max Uses: " + str(ItemsBlocks.Find(key)._maxUses))
             Util.Log("---------------")
 
     def On_PluginInit(self):

@@ -58,8 +58,6 @@ class DonatorRank:
             ini.AddSetting("VKIT_Level1", "Qty8", "1")
             ini.AddSetting("VKIT_Level1", "Inv9", "Silencer")
             ini.AddSetting("VKIT_Level1", "Qty9", "1")
-            ini.AddSetting("VKIT_Level1", "Inv10", "")
-            ini.AddSetting("VKIT_Level1", "Qty10", "")
             ini.AddSetting("VKIT_Level2", "Inv1", "P250")
             ini.AddSetting("VKIT_Level2", "Qty1", "1")
             ini.AddSetting("VKIT_Level2", "Inv2", "9mm Ammo")
@@ -78,8 +76,6 @@ class DonatorRank:
             ini.AddSetting("VKIT_Level2", "Qty8", "1")
             ini.AddSetting("VKIT_Level2", "Inv9", "Silencer")
             ini.AddSetting("VKIT_Level2", "Qty9", "1")
-            ini.AddSetting("VKIT_Level2", "Inv10", "")
-            ini.AddSetting("VKIT_Level2", "Qty10", "")
             ini.AddSetting("DKIT_Level1", "Inv1", "M4")
             ini.AddSetting("DKIT_Level1", "Qty1", "1")
             ini.AddSetting("DKIT_Level1", "Inv2", "556 Ammo")
@@ -98,8 +94,6 @@ class DonatorRank:
             ini.AddSetting("DKIT_Level1", "Qty8", "5")
             ini.AddSetting("DKIT_Level1", "Inv9", "Small Rations")
             ini.AddSetting("DKIT_Level1", "Qty9", "10")
-            ini.AddSetting("DKIT_Level1", "Inv10", "")
-            ini.AddSetting("DKIT_Level1", "Qty10", "")
             ini.AddSetting("DKIT_Level2", "Inv1", "M4")
             ini.AddSetting("DKIT_Level2", "Qty1", "1")
             ini.AddSetting("DKIT_Level2", "Inv2", "556 Ammo")
@@ -118,92 +112,50 @@ class DonatorRank:
             ini.AddSetting("DKIT_Level2", "Qty8", "5")
             ini.AddSetting("DKIT_Level2", "Inv9", "Small Rations")
             ini.AddSetting("DKIT_Level2", "Qty9", "10")
-            ini.AddSetting("DKIT_Level2", "Inv10", "")
-            ini.AddSetting("DKIT_Level2", "Qty10", "")
             ini.Save()
         DataStore.Flush("DonatorRank")
         DataStore.Flush("ModBan")
         ini = Plugin.GetIni("Settings")
-        #DataStore.Add("DonatorRank", "VKIT1_INV1", ini.GetSetting("VKIT_Level1", "Inv1"))
-        #DataStore.Add("DonatorRank", "VKIT1_INV2", ini.GetSetting("VKIT_Level1", "Inv2"))
-        #DataStore.Add("DonatorRank", "VKIT1_INV3", ini.GetSetting("VKIT_Level1", "Inv3"))
-        #DataStore.Add("DonatorRank", "VKIT1_INV4", ini.GetSetting("VKIT_Level1", "Inv4"))
-        #DataStore.Add("DonatorRank", "VKIT1_INV5", ini.GetSetting("VKIT_Level1", "Inv5"))
-        #DataStore.Add("DonatorRank", "VKIT1_INV6", ini.GetSetting("VKIT_Level1", "Inv6"))
-        #DataStore.Add("DonatorRank", "VKIT1_INV7", ini.GetSetting("VKIT_Level1", "Inv7"))
-        #DataStore.Add("DonatorRank", "VKIT1_INV8", ini.GetSetting("VKIT_Level1", "Inv8"))
-        #DataStore.Add("DonatorRank", "VKIT1_INV9", ini.GetSetting("VKIT_Level1", "Inv9"))
-        #DataStore.Add("DonatorRank", "VKIT1_INV10", ini.GetSetting("VKIT_Level1", "Inv10"))
-        #DataStore.Add("DonatorRank", "VKIT1_QTY1", ini.GetSetting("VKIT_Level1", "Qty1"))
-        #DataStore.Add("DonatorRank", "VKIT1_QTY2", ini.GetSetting("VKIT_Level1", "Qty2"))
-        #DataStore.Add("DonatorRank", "VKIT1_QTY3", ini.GetSetting("VKIT_Level1", "Qty3"))
-        #DataStore.Add("DonatorRank", "VKIT1_QTY4", ini.GetSetting("VKIT_Level1", "Qty4"))
-        #DataStore.Add("DonatorRank", "VKIT1_QTY5", ini.GetSetting("VKIT_Level1", "Qty5"))
-        #DataStore.Add("DonatorRank", "VKIT1_QTY6", ini.GetSetting("VKIT_Level1", "Qty6"))
-        #DataStore.Add("DonatorRank", "VKIT1_QTY7", ini.GetSetting("VKIT_Level1", "Qty7"))
-        #DataStore.Add("DonatorRank", "VKIT1_QTY8", ini.GetSetting("VKIT_Level1", "Qty8"))
-        #DataStore.Add("DonatorRank", "VKIT1_QTY9", ini.GetSetting("VKIT_Level1", "Qty9"))
-        #DataStore.Add("DonatorRank", "VKIT1_QTY10", ini.GetSetting("VKIT_Level1", "Qty10"))
-        #DataStore.Add("DonatorRank", "VKIT2_INV1", ini.GetSetting("VKIT_Level2", "Inv1"))
-        #DataStore.Add("DonatorRank", "VKIT2_INV2", ini.GetSetting("VKIT_Level2", "Inv2"))
-        #DataStore.Add("DonatorRank", "VKIT2_INV3", ini.GetSetting("VKIT_Level2", "Inv3"))
-        #DataStore.Add("DonatorRank", "VKIT2_INV4", ini.GetSetting("VKIT_Level2", "Inv4"))
-        #DataStore.Add("DonatorRank", "VKIT2_INV5", ini.GetSetting("VKIT_Level2", "Inv5"))
-        #DataStore.Add("DonatorRank", "VKIT2_INV6", ini.GetSetting("VKIT_Level2", "Inv6"))
-        #DataStore.Add("DonatorRank", "VKIT2_INV7", ini.GetSetting("VKIT_Level2", "Inv7"))
-        #DataStore.Add("DonatorRank", "VKIT2_INV8", ini.GetSetting("VKIT_Level2", "Inv8"))
-        #DataStore.Add("DonatorRank", "VKIT2_INV9", ini.GetSetting("VKIT_Level2", "Inv9"))
-        #DataStore.Add("DonatorRank", "VKIT2_INV10", ini.GetSetting("VKIT_Level2", "Inv10"))
-        #DataStore.Add("DonatorRank", "VKIT2_QTY1", ini.GetSetting("VKIT_Level2", "Qty1"))
-        #DataStore.Add("DonatorRank", "VKIT2_QTY2", ini.GetSetting("VKIT_Level2", "Qty2"))
-        #DataStore.Add("DonatorRank", "VKIT2_QTY3", ini.GetSetting("VKIT_Level2", "Qty3"))
-        #DataStore.Add("DonatorRank", "VKIT2_QTY4", ini.GetSetting("VKIT_Level2", "Qty4"))
-        #DataStore.Add("DonatorRank", "VKIT2_QTY5", ini.GetSetting("VKIT_Level2", "Qty5"))
-        #DataStore.Add("DonatorRank", "VKIT2_QTY6", ini.GetSetting("VKIT_Level2", "Qty6"))
-        #DataStore.Add("DonatorRank", "VKIT2_QTY7", ini.GetSetting("VKIT_Level2", "Qty7"))
-        #DataStore.Add("DonatorRank", "VKIT2_QTY8", ini.GetSetting("VKIT_Level2", "Qty8"))
-        #DataStore.Add("DonatorRank", "VKIT2_QTY9", ini.GetSetting("VKIT_Level2", "Qty9"))
-        #DataStore.Add("DonatorRank", "VKIT2_QTY10", ini.GetSetting("VKIT_Level2", "Qty10"))
-        #DataStore.Add("DonatorRank", "DKIT1_INV1", ini.GetSetting("DKIT_Level1", "Inv1"))
-        #DataStore.Add("DonatorRank", "DKIT1_INV2", ini.GetSetting("DKIT_Level1", "Inv2"))
-        #DataStore.Add("DonatorRank", "DKIT1_INV3", ini.GetSetting("DKIT_Level1", "Inv3"))
-        #DataStore.Add("DonatorRank", "DKIT1_INV4", ini.GetSetting("DKIT_Level1", "Inv4"))
-        #DataStore.Add("DonatorRank", "DKIT1_INV5", ini.GetSetting("DKIT_Level1", "Inv5"))
-        #DataStore.Add("DonatorRank", "DKIT1_INV6", ini.GetSetting("DKIT_Level1", "Inv6"))
-        #DataStore.Add("DonatorRank", "DKIT1_INV7", ini.GetSetting("DKIT_Level1", "Inv7"))
-        #DataStore.Add("DonatorRank", "DKIT1_INV8", ini.GetSetting("DKIT_Level1", "Inv8"))
-        #DataStore.Add("DonatorRank", "DKIT1_INV9", ini.GetSetting("DKIT_Level1", "Inv9"))
-        #DataStore.Add("DonatorRank", "DKIT1_INV10", ini.GetSetting("DKIT_Level1", "Inv10"))
-        #DataStore.Add("DonatorRank", "DKIT1_QTY1", ini.GetSetting("DKIT_Level1", "Qty1"))
-        #DataStore.Add("DonatorRank", "DKIT1_QTY2", ini.GetSetting("DKIT_Level1", "Qty2"))
-        #DataStore.Add("DonatorRank", "DKIT1_QTY3", ini.GetSetting("DKIT_Level1", "Qty3"))
-        #DataStore.Add("DonatorRank", "DKIT1_QTY4", ini.GetSetting("DKIT_Level1", "Qty4"))
-        #DataStore.Add("DonatorRank", "DKIT1_QTY5", ini.GetSetting("DKIT_Level1", "Qty5"))
-        #DataStore.Add("DonatorRank", "DKIT1_QTY6", ini.GetSetting("DKIT_Level1", "Qty6"))
-        #DataStore.Add("DonatorRank", "DKIT1_QTY7", ini.GetSetting("DKIT_Level1", "Qty7"))
-        #DataStore.Add("DonatorRank", "DKIT1_QTY8", ini.GetSetting("DKIT_Level1", "Qty8"))
-        #DataStore.Add("DonatorRank", "DKIT1_QTY9", ini.GetSetting("DKIT_Level1", "Qty9"))
-        #DataStore.Add("DonatorRank", "DKIT1_QTY10", ini.GetSetting("DKIT_Level1", "Qty10"))
-        #DataStore.Add("DonatorRank", "DKIT2_INV1", ini.GetSetting("DKIT_Level2", "Inv1"))
-        #DataStore.Add("DonatorRank", "DKIT2_INV2", ini.GetSetting("DKIT_Level2", "Inv2"))
-        #DataStore.Add("DonatorRank", "DKIT2_INV3", ini.GetSetting("DKIT_Level2", "Inv3"))
-        #DataStore.Add("DonatorRank", "DKIT2_INV4", ini.GetSetting("DKIT_Level2", "Inv4"))
-        #DataStore.Add("DonatorRank", "DKIT2_INV5", ini.GetSetting("DKIT_Level2", "Inv5"))
-        #DataStore.Add("DonatorRank", "DKIT2_INV6", ini.GetSetting("DKIT_Level2", "Inv6"))
-        #DataStore.Add("DonatorRank", "DKIT2_INV7", ini.GetSetting("DKIT_Level2", "Inv7"))
-        #DataStore.Add("DonatorRank", "DKIT2_INV8", ini.GetSetting("DKIT_Level2", "Inv8"))
-        #DataStore.Add("DonatorRank", "DKIT2_INV9", ini.GetSetting("DKIT_Level2", "Inv9"))
-        #DataStore.Add("DonatorRank", "DKIT2_INV10", ini.GetSetting("DKIT_Level2", "Inv10"))
-        #DataStore.Add("DonatorRank", "DKIT2_QTY1", ini.GetSetting("DKIT_Level2", "Qty1"))
-        #DataStore.Add("DonatorRank", "DKIT2_QTY2", ini.GetSetting("DKIT_Level2", "Qty2"))
-        #DataStore.Add("DonatorRank", "DKIT2_QTY3", ini.GetSetting("DKIT_Level2", "Qty3"))
-        #DataStore.Add("DonatorRank", "DKIT2_QTY4", ini.GetSetting("DKIT_Level2", "Qty4"))
-        #DataStore.Add("DonatorRank", "DKIT2_QTY5", ini.GetSetting("DKIT_Level2", "Qty5"))
-        #DataStore.Add("DonatorRank", "DKIT2_QTY6", ini.GetSetting("DKIT_Level2", "Qty6"))
-        #DataStore.Add("DonatorRank", "DKIT2_QTY7", ini.GetSetting("DKIT_Level2", "Qty7"))
-        #DataStore.Add("DonatorRank", "DKIT2_QTY8", ini.GetSetting("DKIT_Level2", "Qty8"))
-        #DataStore.Add("DonatorRank", "DKIT2_QTY9", ini.GetSetting("DKIT_Level2", "Qty9"))
-        #DataStore.Add("DonatorRank", "DKIT2_QTY10", ini.GetSetting("DKIT_Level2", "Qty10"))
+        vkit1 = ini.EnumSection("VKIT_Level1")
+        inv = 1
+        qty = 1
+        for key in vkit1:
+            if key == "Inv" + str(inv):
+                DataStore.Add("DonatorRank", "VKIT1_INV" + str(inv), ini.GetSetting("VKIT_Level1", key))
+                inv += 1
+            elif key == "Qty" + str(qty)
+                DataStore.Add("DonatorRank", "VKIT1_QTY" + str(qty), ini.GetSetting("VKIT_Level1", key))
+                qty += 1
+        vkit2 = ini.EnumSection("VKIT_Level2")
+        inv = 1
+        qty = 1
+        for key in vkit2:
+            if key == "Inv" + str(inv):
+                DataStore.Add("DonatorRank", "VKIT2_INV" + str(inv), ini.GetSetting("VKIT_Level2", key))
+                inv += 1
+            elif key == "Qty" + str(qty)
+                DataStore.Add("DonatorRank", "VKIT2_QTY" + str(qty), ini.GetSetting("VKIT_Level2", key))
+                qty += 1
+        dkit1 = ini.EnumSection("DKIT_Level1")
+        inv = 1
+        qty = 1
+        for key in dkit1:
+            if key == "Inv" + str(inv):
+                DataStore.Add("DonatorRank", "DKIT1_INV" + str(inv), ini.GetSetting("DKIT_Level1", key))
+                inv += 1
+            elif key == "Qty" + str(qty)
+                DataStore.Add("DonatorRank", "DKIT1_QTY" + str(qty), ini.GetSetting("DKIT_Level1", key))
+                qty += 1
+        dkit2 = ini.EnumSection("DKIT_Level2")
+        inv = 1
+        qty = 1
+        for key in dkit2:
+            if key == "Inv" + str(inv):
+                DataStore.Add("DonatorRank", "DKIT2_INV" + str(inv), ini.GetSetting("DKIT_Level2", key))
+                inv += 1
+            elif key == "Qty" + str(qty)
+                DataStore.Add("DonatorRank", "DKIT2_QTY" + str(qty), ini.GetSetting("DKIT_Level2", key))
+                qty += 1
         DataStore.Add("DonatorRank", "JoinMSG", ini.GetSetting("Settings", "JoinMessages"))
         DataStore.Add("DonatorRank", "LeaveMSG", ini.GetSetting("Settings", "LeaveMessages"))
         DataStore.Add("DonatorRank", "ChatPrefix", ini.GetSetting("Settings", "ChatPrefix"))
@@ -584,7 +536,11 @@ class DonatorRank:
                             if calc >= waittime or Player.Admin:
                                 DataStore.Add("LVL1VKitCooldown", Player.SteamID, System.Environment.TickCount)
                                 Player.Notice("Here are your items!")
-                                self.vkit1(sett, Player)
+                                ds = DataStore.Keys("DonatorRank")
+                                count = 1
+                                for key in ds:
+                                    Player.Inventory.AddItem(DataStore.Get("DonatorRank", "VKIT1_INV" + str(count)), int(DataStore.Get("DonatorRank", "VKIT1_QTY" + str(count))))
+                                    count += 1
                             else:
                                 workingout = (round(waittime / 1000, 2) / 60) - round(int(calc) / 1000, 2) / 60
                                 current = round(workingout, 2)
