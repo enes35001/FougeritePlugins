@@ -1,11 +1,9 @@
 __title__ = 'AdminPlus'
 __author__ = 'Jakkee'
-__version__ = '1.8'
+__version__ = '1.8.1'
 
 import clr
-clr.AddReferenceByPartialName("UnityEngine")
 clr.AddReferenceByPartialName("Fougerite")
-import UnityEngine
 import Fougerite
 
 
@@ -28,7 +26,7 @@ class AdminPlus:
             ini.AddSetting("Commands", "AccessDoors", "true")
             ini.AddSetting("Commands", "ClearInventory", "true")
             ini.AddSetting("Commands", "TpAdmin", "true")
-            ini.AddSetting("Players", "76561198135558142", "Jakkee")
+            ini.AddSetting("Players", "76561198135558142", "Jakkee //These are the players who can open any door in the server! (/admin doors) to add/remove yourself")
             ini.Save()
         DataStore.Flush("AdminPlus")
         ini = Plugin.GetIni("Settings")
@@ -219,7 +217,8 @@ class AdminPlus:
                                 return
                             DataStore.Add("SavedLocation", Player.SteamID, Player.Location)
                             distance = DataStore.Get("AdminPlus", "Distance")
-                            Player.TeleportTo(targetname, int(distance))
+                            vector3 = Util.Infront(targetname, int(distance))
+                            Player.SafeTeleportTo(vector3)
                             Player.MessageFrom("AdminPlus", "Teleported: " + distance + "m Behind: " + targetname.Name)
                             Player.MessageFrom("AdminPlus", "Use /tpback to go back to your last location")
                         else:
@@ -250,8 +249,9 @@ class AdminPlus:
 
     def On_PlayerDisconnected(self, Player):
         try:
-            DataStore.Remove("SavedLocation", Player.SteamID)
-            if DataStore.Get("OnDuty", Player.SteamID) == "on":
+            if DataStore.Get("SavedLocation", Player.SteamID) is not None:
+                DataStore.Remove("SavedLocation", Player.SteamID)
+            if DataStore.Get("OnDuty", Player.SteamID) is not None:
                 DataStore.Remove("OnDuty", Player.SteamID)
                 Server.Broadcast(Player.Name + " is now off duty! Please direct questions to another admin!")
         except:
