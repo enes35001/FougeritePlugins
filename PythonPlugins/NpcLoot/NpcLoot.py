@@ -1,6 +1,6 @@
 __title__ = 'NpcLoot'
 __author__ = 'Jakkee'
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 
 import clr
 clr.AddReferenceByPartialName("Fougerite")
@@ -17,7 +17,6 @@ class NpcLoot:
                 coords = self.Parse(str(coords))
                 coords = self.ReplaceToDot(coords[0])
                 World.Spawn(";drop_lootsack_zombie", float(coords[0]) - 1, World.GetGround(float(coords[0]) - 1, float(coords[2])), float(coords[2]))
-                #World.Spawn(";drop_lootsack_zombie", float(coords[0]) - 1, World.GetGround(DamageEvent.Victim.Character.transform.position), float(coords[2]))
             else:
                 return
         elif DamageEvent.Victim.Name == "Bear":
@@ -26,7 +25,7 @@ class NpcLoot:
                 coords = self.Stringify(coords)
                 coords = self.Parse(str(coords))
                 coords = self.ReplaceToDot(coords[0])
-                World.Spawn(";drop_lootsack_zombie", float(coords[0]) - 1.25, World.GetGround(float(coords[0]) - 1.25, float(coords[2])), float(coords[2]))
+                World.Spawn(";drop_lootsack_zombie", float(coords[0]) - 1.5, World.GetGround(float(coords[0]) - 1, float(coords[2])), float(coords[2]))
             else:
                 return
         elif DamageEvent.Victim.Name == "Boar_A":
@@ -44,7 +43,7 @@ class NpcLoot:
                 coords = self.Stringify(coords)
                 coords = self.Parse(str(coords))
                 coords = self.ReplaceToDot(coords[0])
-                World.Spawn(";drop_lootsack_zombie", float(coords[0]) - 1.25, World.GetGround(float(coords[0]) - 1.25, float(coords[2])), float(coords[2]))
+                World.Spawn(";drop_lootsack_zombie", float(coords[0]) - 1.5, World.GetGround(float(coords[0]) - 1, float(coords[2])), float(coords[2]))
             else:
                 return
         elif DamageEvent.Victim.Name == "Chicken_A":
@@ -53,7 +52,7 @@ class NpcLoot:
                 coords = self.Stringify(coords)
                 coords = self.Parse(str(coords))
                 coords = self.ReplaceToDot(coords[0])
-                World.Spawn(";drop_lootsack_zombie", float(coords[0]) - 0.8, World.GetGround(float(coords[0]) - 0.8, float(coords[2])), float(coords[2]))
+                World.Spawn(";drop_lootsack_zombie", float(coords[0]) - 0.8, World.GetGround(float(coords[0]) - 1, float(coords[2])), float(coords[2]))
             else:
                 return
         elif DamageEvent.Victim.Name == "Rabbit_A":
@@ -62,7 +61,7 @@ class NpcLoot:
                 coords = self.Stringify(coords)
                 coords = self.Parse(str(coords))
                 coords = self.ReplaceToDot(coords[0])
-                World.Spawn(";drop_lootsack_zombie", float(coords[0]) - 0.8, World.GetGround(float(coords[0]) - 0.8, float(coords[2])), float(coords[2]))
+                World.Spawn(";drop_lootsack_zombie", float(coords[0]) - 0.8, World.GetGround(float(coords[0]) - 1, float(coords[2])), float(coords[2]))
             else:
                 return
         else:
@@ -89,7 +88,7 @@ class NpcLoot:
         DataStore.Add("NpcLoot", "Stag", ini.GetSetting("DropsLoot", "Stag(Deer)"))
         DataStore.Add("NpcLoot", "Boar", ini.GetSetting("DropsLoot", "Boar(Pig)"))
 
-#DreTaX's awesome shit below
+#these below are 100% not stolen from DreTaX... Or are they?
     def Stringify(self, loc):
         s = re.sub("[[\]\'\ ]", '', str(loc))
         return str(s)
