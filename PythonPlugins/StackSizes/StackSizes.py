@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 __title__ = 'StackSizes'
 __author__ = 'Jakkee'
 __version__ = '1.0'
@@ -9,18 +10,6 @@ import Fougerite
 
 class StackSizes:
     def On_ItemsLoaded(self, ItemsBlocks):
-        ini = Plugin.GetIni("Settings")
-        keys = ini.EnumSection("Items")
-        Util.Log("----------------------------")
-        Util.Log("Starting loop...")
-        for key in keys:
-            Util.Log(key + "'s Old Max Uses: " + str(ItemsBlocks.Find(key)._maxUses))
-            ItemsBlocks.Find(key)._maxUses = int(ini.GetSetting("Items", key))
-            Util.Log(key + "'s New Max Uses: " + str(ItemsBlocks.Find(key)._maxUses))
-            Util.Log("---------------")
-
-    def On_PluginInit(self):
-        Util.ConsoleLog(__title__ + " by " + __author__ + " Version: " + __version__ + " loaded.", False)
         if not Plugin.IniExists("Settings"):
             Plugin.CreateIni("Settings")
             ini = Plugin.GetIni("Settings")
@@ -77,3 +66,7 @@ class StackSizes:
             ini.AddSetting("Items", "Metal Ceiling", "250")
             ini.AddSetting("Items", "Metal Window Bars", "5")
             ini.Save()
+        ini = Plugin.GetIni("Settings")
+        keys = ini.EnumSection("Items")
+        for key in keys:
+            ItemsBlocks.Find(key)._maxUses = int(ini.GetSetting("Items", key))
