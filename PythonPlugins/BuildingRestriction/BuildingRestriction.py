@@ -4,6 +4,8 @@ __version__ = '1.0.1'
 
 import clr
 clr.AddReferenceByPartialName("Fougerite")
+clr.AddReferenceByPartialName("UnityEngine")
+import UnityEngine
 import Fougerite
 
 
@@ -62,6 +64,7 @@ class BuildingRestriction:
                     if height < Entity.Y - foundation.Y:
                         try:
                             Entity.Destroy()
+                            UnityEngine.Object.Destroy(Entity.Object)
                             Player.Inventory.AddItem("Wood Pillar")
                             Player.InventoryNotice("1 x Wood Pillar")
                             Player.Message("You are not allowed to build more than [ " + str(DataStore.Get("BuildingRestriction", "Max Height") / 4) + " ] pillars high")
