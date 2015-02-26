@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 __title__ = 'DonatorRank'
 __author__ = 'Jakkee'
 __version__ = '1.4.1'
@@ -119,13 +120,16 @@ class DonatorRank:
         vkit1 = ini.EnumSection("VKIT_Level1")
         inv = 1
         qty = 1
+        Util.Log("--------------------------------")
+        Util.Log("Starting loop..")
         for key in vkit1:
             if key == "Inv" + str(inv):
                 DataStore.Add("DonatorRank", "VKIT1_INV" + str(inv), ini.GetSetting("VKIT_Level1", key))
                 inv += 1
-            elif key == "Qty" + str(qty)
+            elif key == "Qty" + str(qty):
                 DataStore.Add("DonatorRank", "VKIT1_QTY" + str(qty), ini.GetSetting("VKIT_Level1", key))
                 qty += 1
+        Util.Log("VKIT1 = " + str(inv))
         vkit2 = ini.EnumSection("VKIT_Level2")
         inv = 1
         qty = 1
@@ -133,9 +137,10 @@ class DonatorRank:
             if key == "Inv" + str(inv):
                 DataStore.Add("DonatorRank", "VKIT2_INV" + str(inv), ini.GetSetting("VKIT_Level2", key))
                 inv += 1
-            elif key == "Qty" + str(qty)
+            elif key == "Qty" + str(qty):
                 DataStore.Add("DonatorRank", "VKIT2_QTY" + str(qty), ini.GetSetting("VKIT_Level2", key))
                 qty += 1
+        Util.Log("VKIT2 = " + str(inv))
         dkit1 = ini.EnumSection("DKIT_Level1")
         inv = 1
         qty = 1
@@ -143,9 +148,10 @@ class DonatorRank:
             if key == "Inv" + str(inv):
                 DataStore.Add("DonatorRank", "DKIT1_INV" + str(inv), ini.GetSetting("DKIT_Level1", key))
                 inv += 1
-            elif key == "Qty" + str(qty)
+            elif key == "Qty" + str(qty):
                 DataStore.Add("DonatorRank", "DKIT1_QTY" + str(qty), ini.GetSetting("DKIT_Level1", key))
                 qty += 1
+        Util.Log("DKIT1 = " + str(inv))
         dkit2 = ini.EnumSection("DKIT_Level2")
         inv = 1
         qty = 1
@@ -153,9 +159,10 @@ class DonatorRank:
             if key == "Inv" + str(inv):
                 DataStore.Add("DonatorRank", "DKIT2_INV" + str(inv), ini.GetSetting("DKIT_Level2", key))
                 inv += 1
-            elif key == "Qty" + str(qty)
+            elif key == "Qty" + str(qty):
                 DataStore.Add("DonatorRank", "DKIT2_QTY" + str(qty), ini.GetSetting("DKIT_Level2", key))
                 qty += 1
+        Util.Log("DKIT2 = " + str(inv))
         DataStore.Add("DonatorRank", "JoinMSG", ini.GetSetting("Settings", "JoinMessages"))
         DataStore.Add("DonatorRank", "LeaveMSG", ini.GetSetting("Settings", "LeaveMessages"))
         DataStore.Add("DonatorRank", "ChatPrefix", ini.GetSetting("Settings", "ChatPrefix"))
@@ -184,7 +191,7 @@ class DonatorRank:
             if len(args) == 0:
                 users = self.getUserIni()
                 rank = users.GetSetting(Player.SteamID, "Rank")
-                if Player.Admin or rank == "VIP" or rank == "Donator" or rank == "Moderator":
+                if Player.Admin or rank == "VIP" or rank == "Donator" or rank == "Mod":
                     if users.GetSetting(Player.SteamID, "AddVIPS") == "true" or Player.Admin:
                         Player.Message("/vadd [playername] - Add player as Vip")
                     if users.GetSetting(Player.SteamID, "AddDonators") == "true" or Player.Admin:
@@ -225,16 +232,14 @@ class DonatorRank:
                     if users.GetSetting(Player.SteamID, "AccessInfo") == "true" or Player.Admin:
                         Player.Message("/info [Name] - Get info about a player")
                 else:
-                    Player.MessageFrom("DonatorRank", "Contact a staff member about becoming a VIP/Donator/Moderator")
+                    Player.MessageFrom("DonatorRank", "Contact a staff member about becoming a VIP or Donator")
             else:
                 Player.Message("Usage: /donatorhelp")
  
         elif cmd == "yell":
             users = self.getUserIni()
             if users.GetSetting(Player.SteamID, "UseBroadcast") == "true" or Player.Admin:
-                if len(args) == 0:
-                    Player.Message("Usage: /yell [Message]")
-                elif args.Length > 0:
+                if args.Length > 0:
                     text = self.argsToText(args)
                     Server.BroadcastFrom("Player Broadcast", text)
                     if DataStore.Get("DonatorRank", "LogBroadcasts") == "true":
@@ -243,6 +248,10 @@ class DonatorRank:
                         time = Plugin.GetTime()
                         ini.AddSetting("BoardCasterLog", date + "|" + time + " || " + Player.Name, Player.SteamID + " said: [" + text + "]")
                         ini.Save()
+                    else:
+                        return
+                else:
+                    Player.Message("Usage: /yell [Message]")
             else:
                 Player.Message("You don't have permission to use this command!")
  
@@ -535,12 +544,15 @@ class DonatorRank:
                             calc = System.Environment.TickCount - time
                             if calc >= waittime or Player.Admin:
                                 DataStore.Add("LVL1VKitCooldown", Player.SteamID, System.Environment.TickCount)
-                                Player.Notice("Here are your items!")
                                 ds = DataStore.Keys("DonatorRank")
                                 count = 1
                                 for key in ds:
-                                    Player.Inventory.AddItem(DataStore.Get("DonatorRank", "VKIT1_INV" + str(count)), int(DataStore.Get("DonatorRank", "VKIT1_QTY" + str(count))))
-                                    count += 1
+                                    if key == "VKIT1_INV" + str(count):
+                                        Player.Inventory.AddItem(DataStore.Get("DonatorRank", "VKIT1_INV" + str(count)), int(DataStore.Get("DonatorRank", "VKIT1_QTY" + str(count))))
+                                        count += 1
+                                    else:
+                                        continue
+                                Player.Notice("Here is your kit")
                             else:
                                 workingout = (round(waittime / 1000, 2) / 60) - round(int(calc) / 1000, 2) / 60
                                 current = round(workingout, 2)
@@ -564,7 +576,15 @@ class DonatorRank:
                             if calc >= waittime or Player.Admin or time == 0:
                                 DataStore.Add("LVL2VKitCooldown", Player.SteamID, System.Environment.TickCount)
                                 Player.Notice("Here are your items!")
-                                self.vkit2(sett, Player)
+                                ds = DataStore.Keys("DonatorRank")
+                                count = 1
+                                for key in ds:
+                                    if key == "VKIT2_INV" + str(count):
+                                        Player.Inventory.AddItem(DataStore.Get("DonatorRank", "VKIT2_INV" + str(count)), int(DataStore.Get("DonatorRank", "VKIT2_QTY" + str(count))))
+                                        count += 1
+                                    else:
+                                        continue
+                                Player.Notice("Here is your kit")
                             else:
                                 workingout = (round(waittime / 1000, 2) / 60) - round(int(calc) / 1000, 2) / 60
                                 current = round(workingout, 2)
@@ -593,7 +613,15 @@ class DonatorRank:
                             if calc >= waittime or Player.Admin or time == 0:
                                 DataStore.Add("LVL1DKitCooldown", Player.SteamID, System.Environment.TickCount)
                                 Player.Notice("Here are your items!")
-                                self.dkit1(sett, Player)
+                                ds = DataStore.Keys("DonatorRank")
+                                count = 1
+                                for key in ds:
+                                    if key == "DKIT1_INV" + str(count):
+                                        Player.Inventory.AddItem(DataStore.Get("DonatorRank", "DKIT1_INV" + str(count)), int(DataStore.Get("DonatorRank", "DKIT1_QTY" + str(count))))
+                                        count += 1
+                                    else:
+                                        continue
+                                Player.Notice("Here is your kit")
                             else:
                                 workingout = (round(waittime / 1000, 2) / 60) - round(int(calc) / 1000, 2) / 60
                                 current = round(workingout, 2)
@@ -617,7 +645,15 @@ class DonatorRank:
                             if calc >= waittime or Player.Admin or time == 0:
                                 DataStore.Add("LVL2DKitCooldown", Player.SteamID, System.Environment.TickCount)
                                 Player.Notice("Here are your items!")
-                                self.dkit2(sett, Player)
+                                ds = DataStore.Keys("DonatorRank")
+                                count = 1
+                                for key in ds:
+                                    if key == "DKIT2_INV" + str(count):
+                                        Player.Inventory.AddItem(DataStore.Get("DonatorRank", "DKIT2_INV" + str(count)), int(DataStore.Get("DonatorRank", "DKIT2_QTY" + str(count))))
+                                        count += 1
+                                    else:
+                                        continue
+                                Player.Notice("Here is your kit")
                             else:
                                 workingout = (round(waittime / 1000, 2) / 60) - round(int(calc) / 1000, 2) / 60
                                 current = round(workingout, 2)
@@ -698,7 +734,9 @@ class DonatorRank:
                             Player.InventoryNotice("Hangar")
                             Player.SafeTeleportTo(6600, 356, -4400)
                         else:
-                            Player.Notice("You have to wait before teleporting again!")
+                            workingout = (round(waittime / 1000, 2) / 60) - round(int(calc) / 1000, 2) / 60
+                            current = round(workingout, 2)
+                            Player.Message(str(current) + " Minutes remaining before you can use this.")
                     else:
                         Player.Message("Usage: /vtp [Location]")
                 else:
@@ -792,7 +830,9 @@ class DonatorRank:
                             Player.InventoryNotice("Next Valley")
                             Player.SafeTeleportTo(4668, 445, -3908)
                         else:
-                            Player.Notice("You have to wait before teleporting again!")
+                            workingout = (round(waittime / 1000, 2) / 60) - round(int(calc) / 1000, 2) / 60
+                            current = round(workingout, 2)
+                            Player.Message(str(current) + " Minutes remaining before you can use this.")
                     else:
                         Player.Message("Usage: /dtp [Location]")
                 else:
@@ -802,26 +842,29 @@ class DonatorRank:
  
         elif cmd == "mtp":
             users = self.getUserIni()
-            if users.GetSetting(Player.SteamID, "MTP") == "true" or Player.Admin:
-                if len(args) == 0:
-                    Player.Message("Usage: /mtp [Player Name]")
+            if users.GetSetting(Player.SteamID, "MTP") == "true" or Player.Admin: 
                 if len(args) > 0:
                     targetname = self.CheckV(Player, args)
-                    if targetname is None:
+                    if targetname is not None:
+                        plocation = Player.Location
+                        DataStore.Add("MODLOCATION", Player.SteamID, plocation)
+                        targetname.Notice(Player.Name + " has teleported to you!")
+                        Player.TeleportTo(targetname)
+                        Player.Message("Teleported to: " + targetname.Name)
+                        Player.Message("To teleport back to where you were, Type /mtpback")
+                        Player.TeleportTo(targetname)
+                        if DataStore.Get("DonatorRank", "LogTPS") == "true":
+                            ini = self.getLogIni()
+                            date = Plugin.GetDate()
+                            tym = Plugin.GetTime()
+                            ini.AddSetting("TPLog", date + "| " + tym + " || " + Player.Name + " Teleported to: " + targetname.Name, targetname.SteamID)
+                            ini.Save()
+                        else:
+                            return
+                    else:
                         return
-                    plocation = Player.Location
-                    DataStore.Add("MODLOCATION", Player.SteamID, plocation)
-                    targetname.Notice(Player.Name + " has teleported to you!")
-                    Player.TeleportTo(targetname)
-                    Player.Message("Teleported to: " + targetname.Name)
-                    Player.Message("To teleport back to where you were, Type /mtpback")
-                    Player.TeleportTo(targetname)
-                    if DataStore.Get("DonatorRank", "LogTPS") == "true":
-                        ini = self.getLogIni()
-                        date = Plugin.GetDate()
-                        tym = Plugin.GetTime()
-                        ini.AddSetting("TPLog", date + "| " + tym + " || " + Player.Name + " Teleported to: " + targetname.Name, targetname.SteamID)
-                        ini.Save()
+                else:
+                    Player.Message("Usage: /mtp [Player Name]")
             else:
                 Player.Message("You don't have permission to use this command!")
  
@@ -842,12 +885,7 @@ class DonatorRank:
         elif cmd == "mban":
             users = self.getUserIni()
             if users.GetSetting(Player.SteamID, "CanBan") == "true" or Player.Admin:
-                if len(args) == 0:
-                    DataStore.Add("ModBan", Player.SteamID, "on")
-                    Player.Message("Shoot the player to ban them")
-                    Player.Message("Or you can type /mban [username]")
-                    Player.Message("Type /cban to cancel this action")
-                elif len(args) > 0:
+                if len(args) > 0:
                     targetname = self.CheckV(Player, args)
                     if targetname is not None:
                         ini = self.BansListIni()
@@ -861,6 +899,11 @@ class DonatorRank:
                         targetname.Disconnect()
                     else:
                         return
+                else:
+                    DataStore.Add("ModBan", Player.SteamID, "on")
+                    Player.Message("Shoot the player to ban them")
+                    Player.Message("Or you can type /mban [username]")
+                    Player.Message("Type /cban to cancel this action")
             else:
                 Player.Message("You don't have permission to use this command!")
  
@@ -878,9 +921,7 @@ class DonatorRank:
         elif cmd == "mkick":
             users = self.getUserIni()
             if users.GetSetting(Player.SteamID, "CanKick") == "true" or Player.Admin:
-                if len(args) == 0:
-                    Player.Message("usage: /mkick [name]")
-                elif len(args) > 0:
+                if len(args) > 0:
                     targetname = self.CheckV(Player, args)
                     if targetname is not None:
                         pn = targetname.Name
@@ -888,28 +929,22 @@ class DonatorRank:
                         Server.Broadcast("[color red]" + pn + " [/color]has been kicked by: [color red]" + Player.Name)
                         if DataStore.Get("DonatorRank", "LogKicks") == "true":
                             ini = self.getLogIni()
-                            date = Plugin.GetDate()
-                            tym = Plugin.GetTime()
-                            pyid = targetname.SteamID
-                            tname = targetname.Name
-                            ini.AddSetting("KickedList", date + "| " + tym + " || " + Player.Name + " kicked: " + tname, pyid)
+                            ini.AddSetting("KickedList", Plugin.GetDate() + "| " + Plugin.GetTime() + " || " + Player.Name + " kicked: " + targetname.Name, targetname.SteamID)
                             ini.Save()
                         targetname.Disconnect()
                     else:
                         return
+                else:
+                    Player.Message("usage: /mkick [name]")
             else:
                 Player.Message("You don't have permission to use this command!")
  
         elif cmd == "info":
             users = self.getUserIni()
             if users.GetSetting(Player.SteamID, "AccessInfo") == "true" or Player.Admin:
-                if len(args) == 0:
-                    Player.Message("usage: /info [name]")
-                elif len(args) > 0:
+                if len(args) > 0:
                     targetname = self.CheckV(Player, args)
-                    if targetname is None:
-                        return
-                    else:
+                    if targetname is not None:
                         pip = targetname.IP
                         plocation = str(targetname.Location)
                         pping = str(targetname.Ping)
@@ -920,11 +955,20 @@ class DonatorRank:
                         Player.Message("SteamID: [color cyan]" + pid)
                         Player.Message("Current Location: [color cyan]" + plocation)
                         Player.Message("Ping: [color cyan]" + pping)
+                    else:
+                        return
+                else:
+                    Player.Message("usage: /info [name]")
             else:
                 Player.Message("You don't have permission to use this command!")
  
     def On_PlayerConnected(self, Player):
         try:
+            if self.isBanned(Player):
+                Player.Message("[color red]You are banned!")
+                Player.Message("[color red]You are banned!")
+                Player.Message("[color red]You are banned!")
+                Player.Disconnect()
             ini = self.getUserIni()
             if ini.GetSetting(Player.SteamID, "MaxHomes") is not None:
                 DataStore.Add("MaxHomes", Player.SteamID, int(ini.GetSetting(Player.SteamID, "MaxHomes")))
@@ -935,11 +979,7 @@ class DonatorRank:
             DataStore.Add("LVL2DKitCooldown", Player.SteamID, System.Environment.TickCount)
             DataStore.Add("LVL1VKitCooldown", Player.SteamID, System.Environment.TickCount)
             DataStore.Add("LVL2VKitCooldown", Player.SteamID, System.Environment.TickCount)
-            if self.isBanned(Player):
-                Player.Notice("Talk to the server owner about getting unbanned!")
-                Server.Broadcast("A user with the banned IP: [[color cyan]" + Player.IP + "[/color]] is trying to connect!")
-                Player.Disconnect()
-            elif DataStore.Get("DonatorRank", "JoinMMSG") == "true":
+            if DataStore.Get("DonatorRank", "JoinMMSG") == "true":
                 if self.isBanned(Player):
                     return
                 elif Player.SteamID == DataStore.Get("DonatorRank", "OwnerID"):
@@ -986,36 +1026,36 @@ class DonatorRank:
             pass
  
     def On_Chat(self, Player, ChatMessage):
-        #try:
-        if DataStore.Get("DonatorRank", "ChatPrefix") == "true":
-            if DataStore.Get("DonatorRank", "OwnerID") == str(Player.SteamID):
-                chatmsg = str(ChatMessage)[1:-1]
-                ocolour = DataStore.Get("DonatorRank", "OwnerColour")
-                Server.BroadcastFrom("[Owner] ♚ " + Player.Name, ocolour + chatmsg)
-                ChatMessage.NewText = "*%"
-                return
-            elif Player.Admin:
-                chatmsg = str(ChatMessage)[1:-1]
-                acolour = DataStore.Get("DonatorRank", "AdminColour")
-                Server.BroadcastFrom("[Admin] ♚ " + Player.Name, acolour + chatmsg)
-                ChatMessage.NewText = "*%"
-            elif self.isMod(Player):
-                chatmsg = str(ChatMessage)[1:-1]
-                mcolour = DataStore.Get("DonatorRank", "ModColour")
-                Server.BroadcastFrom("[Mod] ♚ " + Player.Name, mcolour + chatmsg)
-                ChatMessage.NewText = "*%"
-            elif self.isDonator(Player):
-                chatmsg = str(ChatMessage)[1:-1]
-                dcolour = DataStore.Get("DonatorRank", "DonatorColour")
-                Server.BroadcastFrom("[Donator] ☠ " + Player.Name, dcolour + chatmsg)
-                ChatMessage.NewText = "*%"
-            elif self.isVIP(Player):
-                chatmsg = str(ChatMessage)[1:-1]
-                vcolour = DataStore.Get("DonatorRank", "VIPColour")
-                Server.BroadcastFrom("[VIP] ☠ " + Player.Name, vcolour + chatmsg)
-                ChatMessage.NewText = "*%"
-        #except:
-            #pass
+        try:
+            if DataStore.Get("DonatorRank", "ChatPrefix") == "true":
+                if DataStore.Get("DonatorRank", "OwnerID") == str(Player.SteamID):
+                    chatmsg = str(ChatMessage)[1:-1]
+                    ocolour = DataStore.Get("DonatorRank", "OwnerColour")
+                    Server.BroadcastFrom("[Owner]♚" + Player.Name, ocolour + chatmsg)
+                    ChatMessage.NewText = "*%"
+                    return
+                elif Player.Admin:
+                    chatmsg = str(ChatMessage)[1:-1]
+                    acolour = DataStore.Get("DonatorRank", "AdminColour")
+                    Server.BroadcastFrom("[Admin]♚" + Player.Name, acolour + chatmsg)
+                    ChatMessage.NewText = "*%"
+                elif self.isMod(Player):
+                    chatmsg = str(ChatMessage)[1:-1]
+                    mcolour = DataStore.Get("DonatorRank", "ModColour")
+                    Server.BroadcastFrom("[Mod]♚" + Player.Name, mcolour + chatmsg)
+                    ChatMessage.NewText = "*%"
+                elif self.isDonator(Player):
+                    chatmsg = str(ChatMessage)[1:-1]
+                    dcolour = DataStore.Get("DonatorRank", "DonatorColour")
+                    Server.BroadcastFrom("[Donator]☠" + Player.Name, dcolour + chatmsg)
+                    ChatMessage.NewText = "*%"
+                elif self.isVIP(Player):
+                    chatmsg = str(ChatMessage)[1:-1]
+                    vcolour = DataStore.Get("DonatorRank", "VIPColour")
+                    Server.BroadcastFrom("[VIP]☠" + Player.Name, vcolour + chatmsg)
+                    ChatMessage.NewText = "*%"
+        except:
+            pass
 
     def isMod(self, Player):
         try:
@@ -1109,8 +1149,6 @@ class DonatorRank:
     def BansListIni(self):
         if not Plugin.IniExists("BansList"):
             ini = Plugin.CreateIni("BansList")
-            ini.AddSetting("BannedIDs", "", "")
-            ini.AddSetting("BannedIPs", "", "")
             ini.Save()
         return Plugin.GetIni("BansList")
  
@@ -1185,252 +1223,3 @@ class DonatorRank:
             return id
         except:
             return None
-
-    def vkit1(self, sett, Player):
-        #Will add an enum section loop here one day
-        vkitinv1 = sett.GetSetting("VKIT_Level1", "Inv1")
-        vkitinv2 = sett.GetSetting("VKIT_Level1", "Inv2")
-        vkitinv3 = sett.GetSetting("VKIT_Level1", "Inv3")
-        vkitinv4 = sett.GetSetting("VKIT_Level1", "Inv4")
-        vkitinv5 = sett.GetSetting("VKIT_Level1", "Inv5")
-        vkitinv6 = sett.GetSetting("VKIT_Level1", "Inv6")
-        vkitinv7 = sett.GetSetting("VKIT_Level1", "Inv7")
-        vkitinv8 = sett.GetSetting("VKIT_Level1", "Inv8")
-        vkitinv9 = sett.GetSetting("VKIT_Level1", "Inv9")
-        vkitinv10 = sett.GetSetting("VKIT_Level1", "Inv10")
-        vkitinv11 = sett.GetSetting("VKIT_Level1", "Inv11")
-        vkitinv12 = sett.GetSetting("VKIT_Level1", "Inv12")
-        vkitinv13 = sett.GetSetting("VKIT_Level1", "Inv13")
-        vkitinv14 = sett.GetSetting("VKIT_Level1", "Inv14")
-        vkitinv15 = sett.GetSetting("VKIT_Level1", "Inv15")
-        vkitinv16 = sett.GetSetting("VKIT_Level1", "Inv16")
-        vkitinv17 = sett.GetSetting("VKIT_Level1", "Inv17")
-        vkitinv18 = sett.GetSetting("VKIT_Level1", "Inv18")
-        vkitinv19 = sett.GetSetting("VKIT_Level1", "Inv19")
-        vkitinv20 = sett.GetSetting("VKIT_Level1", "Inv20")
-        vkitqty1 = sett.GetSetting("VKIT_Level1", "Qty1")
-        vkitqty2 = sett.GetSetting("VKIT_Level1", "Qty2")
-        vkitqty3 = sett.GetSetting("VKIT_Level1", "Qty3")
-        vkitqty4 = sett.GetSetting("VKIT_Level1", "Qty4")
-        vkitqty5 = sett.GetSetting("VKIT_Level1", "Qty5")
-        vkitqty6 = sett.GetSetting("VKIT_Level1", "Qty6")
-        vkitqty7 = sett.GetSetting("VKIT_Level1", "Qty7")
-        vkitqty8 = sett.GetSetting("VKIT_Level1", "Qty8")
-        vkitqty9 = sett.GetSetting("VKIT_Level1", "Qty9")
-        vkitqty10 = sett.GetSetting("VKIT_Level1", "Qty10")
-        vkitqty11 = sett.GetSetting("VKIT_Level1", "Qty11")
-        vkitqty12 = sett.GetSetting("VKIT_Level1", "Qty12")
-        vkitqty13 = sett.GetSetting("VKIT_Level1", "Qty13")
-        vkitqty14 = sett.GetSetting("VKIT_Level1", "Qty14")
-        vkitqty15 = sett.GetSetting("VKIT_Level1", "Qty15")
-        vkitqty16 = sett.GetSetting("VKIT_Level1", "Qty16")
-        vkitqty17 = sett.GetSetting("VKIT_Level1", "Qty17")
-        vkitqty18 = sett.GetSetting("VKIT_Level1", "Qty18")
-        vkitqty19 = sett.GetSetting("VKIT_Level1", "Qty19")
-        vkitqty20 = sett.GetSetting("VKIT_Level1", "Qty20")
-        Player.Inventory.AddItem(vkitinv1, int(vkitqty1))
-        Player.Inventory.AddItem(vkitinv2, int(vkitqty2))
-        Player.Inventory.AddItem(vkitinv3, int(vkitqty3))
-        Player.Inventory.AddItem(vkitinv4, int(vkitqty4))
-        Player.Inventory.AddItem(vkitinv5, int(vkitqty5))
-        Player.Inventory.AddItem(vkitinv6, int(vkitqty6))
-        Player.Inventory.AddItem(vkitinv7, int(vkitqty7))
-        Player.Inventory.AddItem(vkitinv8, int(vkitqty8))
-        Player.Inventory.AddItem(vkitinv9, int(vkitqty9))
-        Player.Inventory.AddItem(vkitinv10, int(vkitqty10))
-        Player.Inventory.AddItem(vkitinv11, int(vkitqty11))
-        Player.Inventory.AddItem(vkitinv12, int(vkitqty12))
-        Player.Inventory.AddItem(vkitinv13, int(vkitqty13))
-        Player.Inventory.AddItem(vkitinv14, int(vkitqty14))
-        Player.Inventory.AddItem(vkitinv15, int(vkitqty15))
-        Player.Inventory.AddItem(vkitinv16, int(vkitqty16))
-        Player.Inventory.AddItem(vkitinv17, int(vkitqty17))
-        Player.Inventory.AddItem(vkitinv18, int(vkitqty18))
-        Player.Inventory.AddItem(vkitinv19, int(vkitqty19))
-        Player.Inventory.AddItem(vkitinv20, int(vkitqty20))
-
-    def vkit2(self, sett, Player):
-        vkitinv1 = sett.GetSetting("VKIT_Level2", "Inv1")
-        vkitinv2 = sett.GetSetting("VKIT_Level2", "Inv2")
-        vkitinv3 = sett.GetSetting("VKIT_Level2", "Inv3")
-        vkitinv4 = sett.GetSetting("VKIT_Level2", "Inv4")
-        vkitinv5 = sett.GetSetting("VKIT_Level2", "Inv5")
-        vkitinv6 = sett.GetSetting("VKIT_Level2", "Inv6")
-        vkitinv7 = sett.GetSetting("VKIT_Level2", "Inv7")
-        vkitinv8 = sett.GetSetting("VKIT_Level2", "Inv8")
-        vkitinv9 = sett.GetSetting("VKIT_Level2", "Inv9")
-        vkitinv10 = sett.GetSetting("VKIT_Level2", "Inv10")
-        vkitinv11 = sett.GetSetting("VKIT_Level2", "Inv11")
-        vkitinv12 = sett.GetSetting("VKIT_Level2", "Inv12")
-        vkitinv13 = sett.GetSetting("VKIT_Level2", "Inv13")
-        vkitinv14 = sett.GetSetting("VKIT_Level2", "Inv14")
-        vkitinv15 = sett.GetSetting("VKIT_Level2", "Inv15")
-        vkitinv16 = sett.GetSetting("VKIT_Level2", "Inv16")
-        vkitinv17 = sett.GetSetting("VKIT_Level2", "Inv17")
-        vkitinv18 = sett.GetSetting("VKIT_Level2", "Inv18")
-        vkitinv19 = sett.GetSetting("VKIT_Level2", "Inv19")
-        vkitinv20 = sett.GetSetting("VKIT_Level2", "Inv20")
-        vkitqty1 = sett.GetSetting("VKIT_Level2", "Qty1")
-        vkitqty2 = sett.GetSetting("VKIT_Level2", "Qty2")
-        vkitqty3 = sett.GetSetting("VKIT_Level2", "Qty3")
-        vkitqty4 = sett.GetSetting("VKIT_Level2", "Qty4")
-        vkitqty5 = sett.GetSetting("VKIT_Level2", "Qty5")
-        vkitqty6 = sett.GetSetting("VKIT_Level2", "Qty6")
-        vkitqty7 = sett.GetSetting("VKIT_Level2", "Qty7")
-        vkitqty8 = sett.GetSetting("VKIT_Level2", "Qty8")
-        vkitqty9 = sett.GetSetting("VKIT_Level2", "Qty9")
-        vkitqty10 = sett.GetSetting("VKIT_Level2", "Qty10")
-        vkitqty11 = sett.GetSetting("VKIT_Level2", "Qty11")
-        vkitqty12 = sett.GetSetting("VKIT_Level2", "Qty12")
-        vkitqty13 = sett.GetSetting("VKIT_Level2", "Qty13")
-        vkitqty14 = sett.GetSetting("VKIT_Level2", "Qty14")
-        vkitqty15 = sett.GetSetting("VKIT_Level2", "Qty15")
-        vkitqty16 = sett.GetSetting("VKIT_Level2", "Qty16")
-        vkitqty17 = sett.GetSetting("VKIT_Level2", "Qty17")
-        vkitqty18 = sett.GetSetting("VKIT_Level2", "Qty18")
-        vkitqty19 = sett.GetSetting("VKIT_Level2", "Qty19")
-        vkitqty20 = sett.GetSetting("VKIT_Level2", "Qty20")
-        Player.Inventory.AddItem(vkitinv1, int(vkitqty1))
-        Player.Inventory.AddItem(vkitinv2, int(vkitqty2))
-        Player.Inventory.AddItem(vkitinv3, int(vkitqty3))
-        Player.Inventory.AddItem(vkitinv4, int(vkitqty4))
-        Player.Inventory.AddItem(vkitinv5, int(vkitqty5))
-        Player.Inventory.AddItem(vkitinv6, int(vkitqty6))
-        Player.Inventory.AddItem(vkitinv7, int(vkitqty7))
-        Player.Inventory.AddItem(vkitinv8, int(vkitqty8))
-        Player.Inventory.AddItem(vkitinv9, int(vkitqty9))
-        Player.Inventory.AddItem(vkitinv10, int(vkitqty10))
-        Player.Inventory.AddItem(vkitinv11, int(vkitqty11))
-        Player.Inventory.AddItem(vkitinv12, int(vkitqty12))
-        Player.Inventory.AddItem(vkitinv13, int(vkitqty13))
-        Player.Inventory.AddItem(vkitinv14, int(vkitqty14))
-        Player.Inventory.AddItem(vkitinv15, int(vkitqty15))
-        Player.Inventory.AddItem(vkitinv16, int(vkitqty16))
-        Player.Inventory.AddItem(vkitinv17, int(vkitqty17))
-        Player.Inventory.AddItem(vkitinv18, int(vkitqty18))
-        Player.Inventory.AddItem(vkitinv19, int(vkitqty19))
-        Player.Inventory.AddItem(vkitinv20, int(vkitqty20))
-
-    def dkit1(self, sett, Player):
-        dkitinv1 = sett.GetSetting("DKIT_Level1", "Inv1")
-        dkitinv2 = sett.GetSetting("DKIT_Level1", "Inv2")
-        dkitinv3 = sett.GetSetting("DKIT_Level1", "Inv3")
-        dkitinv4 = sett.GetSetting("DKIT_Level1", "Inv4")
-        dkitinv5 = sett.GetSetting("DKIT_Level1", "Inv5")
-        dkitinv6 = sett.GetSetting("DKIT_Level1", "Inv6")
-        dkitinv7 = sett.GetSetting("DKIT_Level1", "Inv7")
-        dkitinv8 = sett.GetSetting("DKIT_Level1", "Inv8")
-        dkitinv9 = sett.GetSetting("DKIT_Level1", "Inv9")
-        dkitinv10 = sett.GetSetting("DKIT_Level1", "Inv10")
-        dkitinv11 = sett.GetSetting("DKIT_Level1", "Inv11")
-        dkitinv12 = sett.GetSetting("DKIT_Level1", "Inv12")
-        dkitinv13 = sett.GetSetting("DKIT_Level1", "Inv13")
-        dkitinv14 = sett.GetSetting("DKIT_Level1", "Inv14")
-        dkitinv15 = sett.GetSetting("DKIT_Level1", "Inv15")
-        dkitinv16 = sett.GetSetting("DKIT_Level1", "Inv16")
-        dkitinv17 = sett.GetSetting("DKIT_Level1", "Inv17")
-        dkitinv18 = sett.GetSetting("DKIT_Level1", "Inv18")
-        dkitinv19 = sett.GetSetting("DKIT_Level1", "Inv19")
-        dkitinv20 = sett.GetSetting("DKIT_Level1", "Inv20")
-        dkitqty1 = sett.GetSetting("DKIT_Level1", "Qty1")
-        dkitqty2 = sett.GetSetting("DKIT_Level1", "Qty2")
-        dkitqty3 = sett.GetSetting("DKIT_Level1", "Qty3")
-        dkitqty4 = sett.GetSetting("DKIT_Level1", "Qty4")
-        dkitqty5 = sett.GetSetting("DKIT_Level1", "Qty5")
-        dkitqty6 = sett.GetSetting("DKIT_Level1", "Qty6")
-        dkitqty7 = sett.GetSetting("DKIT_Level1", "Qty7")
-        dkitqty8 = sett.GetSetting("DKIT_Level1", "Qty8")
-        dkitqty9 = sett.GetSetting("DKIT_Level1", "Qty9")
-        dkitqty10 = sett.GetSetting("DKIT_Level1", "Qty10")
-        dkitqty11 = sett.GetSetting("DKIT_Level1", "Qty11")
-        dkitqty12 = sett.GetSetting("DKIT_Level1", "Qty12")
-        dkitqty13 = sett.GetSetting("DKIT_Level1", "Qty13")
-        dkitqty14 = sett.GetSetting("DKIT_Level1", "Qty14")
-        dkitqty15 = sett.GetSetting("DKIT_Level1", "Qty15")
-        dkitqty16 = sett.GetSetting("DKIT_Level1", "Qty16")
-        dkitqty17 = sett.GetSetting("DKIT_Level1", "Qty17")
-        dkitqty18 = sett.GetSetting("DKIT_Level1", "Qty18")
-        dkitqty19 = sett.GetSetting("DKIT_Level1", "Qty19")
-        dkitqty20 = sett.GetSetting("DKIT_Level1", "Qty20")
-        Player.Inventory.AddItem(dkitinv1, int(dkitqty1))
-        Player.Inventory.AddItem(dkitinv2, int(dkitqty2))
-        Player.Inventory.AddItem(dkitinv3, int(dkitqty3))
-        Player.Inventory.AddItem(dkitinv4, int(dkitqty4))
-        Player.Inventory.AddItem(dkitinv5, int(dkitqty5))
-        Player.Inventory.AddItem(dkitinv6, int(dkitqty6))
-        Player.Inventory.AddItem(dkitinv7, int(dkitqty7))
-        Player.Inventory.AddItem(dkitinv8, int(dkitqty8))
-        Player.Inventory.AddItem(dkitinv9, int(dkitqty9))
-        Player.Inventory.AddItem(dkitinv10, int(dkitqty10))
-        Player.Inventory.AddItem(dkitinv11, int(dkitqty11))
-        Player.Inventory.AddItem(dkitinv12, int(dkitqty12))
-        Player.Inventory.AddItem(dkitinv13, int(dkitqty13))
-        Player.Inventory.AddItem(dkitinv14, int(dkitqty14))
-        Player.Inventory.AddItem(dkitinv15, int(dkitqty15))
-        Player.Inventory.AddItem(dkitinv16, int(dkitqty16))
-        Player.Inventory.AddItem(dkitinv17, int(dkitqty17))
-        Player.Inventory.AddItem(dkitinv18, int(dkitqty18))
-        Player.Inventory.AddItem(dkitinv19, int(dkitqty19))
-        Player.Inventory.AddItem(dkitinv20, int(dkitqty20))
-
-    def dkit2(self, sett, Player):
-        dkitinv1 = sett.GetSetting("DKIT_Level2", "Inv1")
-        dkitinv2 = sett.GetSetting("DKIT_Level2", "Inv2")
-        dkitinv3 = sett.GetSetting("DKIT_Level2", "Inv3")
-        dkitinv4 = sett.GetSetting("DKIT_Level2", "Inv4")
-        dkitinv5 = sett.GetSetting("DKIT_Level2", "Inv5")
-        dkitinv6 = sett.GetSetting("DKIT_Level2", "Inv6")
-        dkitinv7 = sett.GetSetting("DKIT_Level2", "Inv7")
-        dkitinv8 = sett.GetSetting("DKIT_Level2", "Inv8")
-        dkitinv9 = sett.GetSetting("DKIT_Level2", "Inv9")
-        dkitinv10 = sett.GetSetting("DKIT_Level2", "Inv10")
-        dkitinv11 = sett.GetSetting("DKIT_Level2", "Inv11")
-        dkitinv12 = sett.GetSetting("DKIT_Level2", "Inv12")
-        dkitinv13 = sett.GetSetting("DKIT_Level2", "Inv13")
-        dkitinv14 = sett.GetSetting("DKIT_Level2", "Inv14")
-        dkitinv15 = sett.GetSetting("DKIT_Level2", "Inv15")
-        dkitinv16 = sett.GetSetting("DKIT_Level2", "Inv16")
-        dkitinv17 = sett.GetSetting("DKIT_Level2", "Inv17")
-        dkitinv18 = sett.GetSetting("DKIT_Level2", "Inv18")
-        dkitinv19 = sett.GetSetting("DKIT_Level2", "Inv19")
-        dkitinv20 = sett.GetSetting("DKIT_Level2", "Inv20")
-        dkitqty1 = sett.GetSetting("DKIT_Level2", "Qty1")
-        dkitqty2 = sett.GetSetting("DKIT_Level2", "Qty2")
-        dkitqty3 = sett.GetSetting("DKIT_Level2", "Qty3")
-        dkitqty4 = sett.GetSetting("DKIT_Level2", "Qty4")
-        dkitqty5 = sett.GetSetting("DKIT_Level2", "Qty5")
-        dkitqty6 = sett.GetSetting("DKIT_Level2", "Qty6")
-        dkitqty7 = sett.GetSetting("DKIT_Level2", "Qty7")
-        dkitqty8 = sett.GetSetting("DKIT_Level2", "Qty8")
-        dkitqty9 = sett.GetSetting("DKIT_Level2", "Qty9")
-        dkitqty10 = sett.GetSetting("DKIT_Level2", "Qty10")
-        dkitqty11 = sett.GetSetting("DKIT_Level2", "Qty11")
-        dkitqty12 = sett.GetSetting("DKIT_Level2", "Qty12")
-        dkitqty13 = sett.GetSetting("DKIT_Level2", "Qty13")
-        dkitqty14 = sett.GetSetting("DKIT_Level2", "Qty14")
-        dkitqty15 = sett.GetSetting("DKIT_Level2", "Qty15")
-        dkitqty16 = sett.GetSetting("DKIT_Level2", "Qty16")
-        dkitqty17 = sett.GetSetting("DKIT_Level2", "Qty17")
-        dkitqty18 = sett.GetSetting("DKIT_Level2", "Qty18")
-        dkitqty19 = sett.GetSetting("DKIT_Level2", "Qty19")
-        dkitqty20 = sett.GetSetting("DKIT_Level2", "Qty20")
-        Player.Inventory.AddItem(dkitinv1, int(dkitqty1))
-        Player.Inventory.AddItem(dkitinv2, int(dkitqty2))
-        Player.Inventory.AddItem(dkitinv3, int(dkitqty3))
-        Player.Inventory.AddItem(dkitinv4, int(dkitqty4))
-        Player.Inventory.AddItem(dkitinv5, int(dkitqty5))
-        Player.Inventory.AddItem(dkitinv6, int(dkitqty6))
-        Player.Inventory.AddItem(dkitinv7, int(dkitqty7))
-        Player.Inventory.AddItem(dkitinv8, int(dkitqty8))
-        Player.Inventory.AddItem(dkitinv9, int(dkitqty9))
-        Player.Inventory.AddItem(dkitinv10, int(dkitqty10))
-        Player.Inventory.AddItem(dkitinv11, int(dkitqty11))
-        Player.Inventory.AddItem(dkitinv12, int(dkitqty12))
-        Player.Inventory.AddItem(dkitinv13, int(dkitqty13))
-        Player.Inventory.AddItem(dkitinv14, int(dkitqty14))
-        Player.Inventory.AddItem(dkitinv15, int(dkitqty15))
-        Player.Inventory.AddItem(dkitinv16, int(dkitqty16))
-        Player.Inventory.AddItem(dkitinv17, int(dkitqty17))
-        Player.Inventory.AddItem(dkitinv18, int(dkitqty18))
-        Player.Inventory.AddItem(dkitinv19, int(dkitqty19))
-        Player.Inventory.AddItem(dkitinv20, int(dkitqty20))
