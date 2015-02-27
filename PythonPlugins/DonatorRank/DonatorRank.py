@@ -1,18 +1,22 @@
 # -*- coding: utf-8 -*-
 __title__ = 'DonatorRank'
 __author__ = 'Jakkee'
-__version__ = '1.4.1'
+__version__ = '1.4.2'
  
 import clr
-clr.AddReferenceByPartialName("UnityEngine")
 clr.AddReferenceByPartialName("Fougerite")
 import System
 import math
 import Fougerite
-import UnityEngine
  
  
 class DonatorRank:
+
+#These are for DTP / VTP
+    __PLAYER__ = None
+    __LOCATION__ = None
+    __LOCNAME__ = None
+
     def On_PluginInit(self):
         Util.ConsoleLog(__title__ + " by " + __author__ + " Version: " + __version__ + " loaded.", False)
         if not Plugin.IniExists("Settings"):
@@ -114,14 +118,50 @@ class DonatorRank:
             ini.AddSetting("DKIT_Level2", "Inv9", "Small Rations")
             ini.AddSetting("DKIT_Level2", "Qty9", "10")
             ini.Save()
+        if not Plugin.IniExists("TPLocations"):
+            Plugin.CreateIni("TPLocations")
+            ini = Plugin.GetIni("TPLocations")
+            ini.AddSetting("EXAMPLE", "location name here", "X, Y, Z")
+            ini.AddSetting("EXAMPLE", "ADDING A NEW LOCATION", "Just add the location name plus X/Y/Z location (Add 1 to the Y so players don't glitch into the ground)")
+            ini.AddSetting("EXAMPLE", "COOLDOWNS", "Cooldowns are in seconds")
+            ini.AddSetting("Settings", "VTP TPDelay", "5")
+            ini.AddSetting("Settings", "DTP TPDelay", "5")
+            ini.AddSetting("VTP", "Small Rad", "6050, 381, -3620")
+            ini.AddSetting("VTP", "Big Rad", "5250, 371, -4850")
+            ini.AddSetting("VTP", "Factory Rad", "6300, 361, -4650")
+            ini.AddSetting("VTP", "Hanger", "6600, 356, -4400")
+            ini.AddSetting("DTP", "Small Rad", "6050, 381, -3620")
+            ini.AddSetting("DTP", "Big Rad", "5250, 371, -4850")
+            ini.AddSetting("DTP", "Factory Rad", "6300, 361, -4650")
+            ini.AddSetting("DTP", "Hanger", "6600, 356, -4400")
+            ini.AddSetting("DTP", "Oil Tankers", "6690, 356, -3880")
+            ini.AddSetting("DTP", "North Hacker Valley", "5000, 461, -3000")
+            ini.AddSetting("DTP", "French Valley", "6056, 385, -4162")
+            ini.AddSetting("DTP", "North Next Valley", "4668, 445, -3908")
+            ini.Save()
+        self.__PLAYER__ = None
+        self.__LOCATION__ = None
+        self.__LOCNAME__ = None
         DataStore.Flush("DonatorRank")
         DataStore.Flush("ModBan")
+        self.killtimer()
+        tp = Plugin.GetIni("TPLocations")
+        DataStore.Add("DonatorRank", "VTPDELAY", int(tp.GetSetting("Settings", "VTP TPDelay")))
+        DataStore.Add("DonatorRank", "DTPDELAY", int(tp.GetSetting("Settings", "DTP TPDelay")))
+        count = 1
+        for key in tp.EnumSection("VTP"):
+            DataStore.Add("DonatorRank", "VTP" + str(count), key)
+            DataStore.Add("DonatorRank", key, tp.GetSetting("VTP", key))
+            count += 1
+        count = 1
+        for key in tp.EnumSection("DTP"):
+            DataStore.Add("DonatorRank", "DTP" + str(count), key)
+            DataStore.Add("DonatorRank", key, tp.GetSetting("DTP", key))
+            count += 1
         ini = Plugin.GetIni("Settings")
         vkit1 = ini.EnumSection("VKIT_Level1")
         inv = 1
         qty = 1
-        Util.Log("--------------------------------")
-        Util.Log("Starting loop..")
         for key in vkit1:
             if key == "Inv" + str(inv):
                 DataStore.Add("DonatorRank", "VKIT1_INV" + str(inv), ini.GetSetting("VKIT_Level1", key))
@@ -129,7 +169,6 @@ class DonatorRank:
             elif key == "Qty" + str(qty):
                 DataStore.Add("DonatorRank", "VKIT1_QTY" + str(qty), ini.GetSetting("VKIT_Level1", key))
                 qty += 1
-        Util.Log("VKIT1 = " + str(inv))
         vkit2 = ini.EnumSection("VKIT_Level2")
         inv = 1
         qty = 1
@@ -140,7 +179,6 @@ class DonatorRank:
             elif key == "Qty" + str(qty):
                 DataStore.Add("DonatorRank", "VKIT2_QTY" + str(qty), ini.GetSetting("VKIT_Level2", key))
                 qty += 1
-        Util.Log("VKIT2 = " + str(inv))
         dkit1 = ini.EnumSection("DKIT_Level1")
         inv = 1
         qty = 1
@@ -151,7 +189,6 @@ class DonatorRank:
             elif key == "Qty" + str(qty):
                 DataStore.Add("DonatorRank", "DKIT1_QTY" + str(qty), ini.GetSetting("DKIT_Level1", key))
                 qty += 1
-        Util.Log("DKIT1 = " + str(inv))
         dkit2 = ini.EnumSection("DKIT_Level2")
         inv = 1
         qty = 1
@@ -162,7 +199,6 @@ class DonatorRank:
             elif key == "Qty" + str(qty):
                 DataStore.Add("DonatorRank", "DKIT2_QTY" + str(qty), ini.GetSetting("DKIT_Level2", key))
                 qty += 1
-        Util.Log("DKIT2 = " + str(inv))
         DataStore.Add("DonatorRank", "JoinMSG", ini.GetSetting("Settings", "JoinMessages"))
         DataStore.Add("DonatorRank", "LeaveMSG", ini.GetSetting("Settings", "LeaveMessages"))
         DataStore.Add("DonatorRank", "ChatPrefix", ini.GetSetting("Settings", "ChatPrefix"))
@@ -220,6 +256,7 @@ class DonatorRank:
                         Player.Message("/mban - Shoot a player to ban them")
                         Player.Message("/mban [Name] - To ban a player by their name instead of shooting")
                         Player.Message("/cban - To cancel shooting a player to ban")
+                        Player.Message("/munban [SteamID] - Unbans a steamID")
                     if users.GetSetting(Player.SteamID, "VTP") == "true" or Player.Admin:
                         Player.Message("/vtp - Teleport to preset locations")
                     if users.GetSetting(Player.SteamID, "DTP") == "true" or Player.Admin:
@@ -550,8 +587,7 @@ class DonatorRank:
                                     if key == "VKIT1_INV" + str(count):
                                         Player.Inventory.AddItem(DataStore.Get("DonatorRank", "VKIT1_INV" + str(count)), int(DataStore.Get("DonatorRank", "VKIT1_QTY" + str(count))))
                                         count += 1
-                                    else:
-                                        continue
+                                Player.Message(str(count))
                                 Player.Notice("Here is your kit")
                             else:
                                 workingout = (round(waittime / 1000, 2) / 60) - round(int(calc) / 1000, 2) / 60
@@ -575,7 +611,6 @@ class DonatorRank:
                             calc = System.Environment.TickCount - time
                             if calc >= waittime or Player.Admin or time == 0:
                                 DataStore.Add("LVL2VKitCooldown", Player.SteamID, System.Environment.TickCount)
-                                Player.Notice("Here are your items!")
                                 ds = DataStore.Keys("DonatorRank")
                                 count = 1
                                 for key in ds:
@@ -612,7 +647,6 @@ class DonatorRank:
                             calc = System.Environment.TickCount - int(time)
                             if calc >= waittime or Player.Admin or time == 0:
                                 DataStore.Add("LVL1DKitCooldown", Player.SteamID, System.Environment.TickCount)
-                                Player.Notice("Here are your items!")
                                 ds = DataStore.Keys("DonatorRank")
                                 count = 1
                                 for key in ds:
@@ -644,7 +678,6 @@ class DonatorRank:
                             calc = System.Environment.TickCount - time
                             if calc >= waittime or Player.Admin or time == 0:
                                 DataStore.Add("LVL2DKitCooldown", Player.SteamID, System.Environment.TickCount)
-                                Player.Notice("Here are your items!")
                                 ds = DataStore.Keys("DonatorRank")
                                 count = 1
                                 for key in ds:
@@ -690,57 +723,40 @@ class DonatorRank:
             users = self.getUserIni()
             if users.GetSetting(Player.SteamID, "VTP") == "true" or Player.Admin:
                 if len(args) == 0:
-                    Player.Message("Teleport locations:")
-                    Player.Message("Smallrad, Bigrad")
-                    Player.Message("Factory, Hangar")
+                    ds = DataStore.Keys("DonatorRank")
+                    count = 1
+                    Player.Message("Usage: /vtp [Number]")
+                    for key in ds:
+                        if key == "VTP" + str(count):
+                            Player.Message(str(count) + ") - " + DataStore.Get("DonatorRank", key))
+                            count += 1
                 elif len(args) == 1:
                     waittime = int(DataStore.Get("DonatorRank", "VTPCoolDown"))
                     time = DataStore.Get("VTPCooldown", Player.SteamID)
                     time = int(time)
                     if time is None:
                         time = 0
-                    elif args[0] == "Smallrad":
-                        calc = System.Environment.TickCount - time
+                    calc = System.Environment.TickCount - time
+                    if DataStore.Get("DonatorRank", "VTP" + args[0]) is not None:
                         if calc >= waittime or Player.Admin:
-                            Player.SafeTeleportTo(6050, 381, -3620)
-                            DataStore.Add("VTPCooldown", Player.SteamID, System.Environment.TickCount)
-                            Player.InventoryNotice("Small Rad Town")
-                            Player.SafeTeleportTo(6050, 381, -3620)
-                        else:
-                            Player.Notice("You have to wait before teleporting again!")
-                    elif args[0] == "Bigrad":
-                        calc = System.Environment.TickCount - time
-                        if calc >= waittime or Player.Admin:
-                            Player.SafeTeleportTo(5250, 371, -4850)
-                            DataStore.Add("VTPCooldown", Player.SteamID, System.Environment.TickCount)
-                            Player.InventoryNotice("Big Rad Town")
-                            Player.SafeTeleportTo(5250, 371, -4850)
-                        else:
-                            Player.Notice("You have to wait before teleporting again!")
-                    elif args[0] == "Factory":
-                        calc = System.Environment.TickCount - time
-                        if calc >= waittime or Player.Admin:
-                            Player.SafeTeleportTo(6300, 361, -4650)
-                            DataStore.Add("VTPCooldown", Player.SteamID, System.Environment.TickCount)
-                            Player.InventoryNotice("Factory Rad")
-                            Player.SafeTeleportTo(6300, 361, -4650)
-                        else:
-                            Player.Notice("You have to wait before teleporting again!")
-                    elif args[0] == "Hangar":
-                        calc = System.Environment.TickCount - time
-                        if calc >= waittime or Player.Admin:
-                            Player.SafeTeleportTo(6600, 356, -4400)
-                            DataStore.Add("VTPCooldown", Player.SteamID, System.Environment.TickCount)
-                            Player.InventoryNotice("Hangar")
-                            Player.SafeTeleportTo(6600, 356, -4400)
+                            if self.__PLAYER__ is None:
+                                delay = DataStore.Get("DonatorRank", "VTPDELAY")
+                                Player.Message("Teleporting in " + str(delay) + " seconds.")
+                                self.__LOCNAME__ = DataStore.Get("DonatorRank", "VTP" + args[0])
+                                self.__LOCATION__ = DataStore.Get("DonatorRank", self.__LOCNAME__).split(",")
+                                self.__PLAYER__ = Player
+                                DataStore.Add("VTPCooldown", Player.SteamID, System.Environment.TickCount)
+                                Plugin.CreateTimer("tpdelay", delay * 1000).Start()
+                            else:
+                                Player.Message(self.__PLAYER__.Name + " is using this command, Wait a few seconds")
                         else:
                             workingout = (round(waittime / 1000, 2) / 60) - round(int(calc) / 1000, 2) / 60
                             current = round(workingout, 2)
                             Player.Message(str(current) + " Minutes remaining before you can use this.")
                     else:
-                        Player.Message("Usage: /vtp [Location]")
+                        Player.Message("Usage: /vtp [Number]")
                 else:
-                    Player.Message("Usage: /vtp [Location]")
+                    Player.Message("Usage: /vtp [Number]")
             else:
                 Player.Message("You don't have permission to use this command!")
  
@@ -748,95 +764,40 @@ class DonatorRank:
             users = self.getUserIni()
             if users.GetSetting(Player.SteamID, "DTP") == "true" or Player.Admin:
                 if len(args) == 0:
-                    Player.Message("Teleport locations:")
-                    Player.Message("Smallrad, Bigrad")
-                    Player.Message("Factory, Hangar")
-                    Player.Message("Tankers, Hackervalley")
-                    Player.Message("French, Nextvalley")
+                    ds = DataStore.Keys("DonatorRank")
+                    count = 1
+                    Player.Message("Usage: /dtp [Number]")
+                    for key in ds:
+                        if key == "DTP" + str(count):
+                            Player.Message(str(count) + ") - " + DataStore.Get("DonatorRank", key))
+                            count += 1
                 elif len(args) == 1:
                     waittime = int(DataStore.Get("DonatorRank", "DTPCoolDown"))
                     time = DataStore.Get("DTPCooldown", Player.SteamID)
                     time = int(time)
                     if time is None:
                         time = 0
-                    elif args[0] == "Smallrad":
-                        calc = System.Environment.TickCount - time
+                    calc = System.Environment.TickCount - time
+                    if DataStore.Get("DonatorRank", "DTP" + args[0]) is not None:
                         if calc >= waittime or Player.Admin:
-                            Player.SafeTeleportTo(6050, 381, -3620)
-                            DataStore.Add("VTPCooldown", Player.SteamID, System.Environment.TickCount)
-                            Player.InventoryNotice("Small Rad Town")
-                            Player.SafeTeleportTo(6050, 381, -3620)
-                        else:
-                            Player.Notice("You have to wait before teleporting again!")
-                    elif args[0] == "Bigrad":
-                        calc = System.Environment.TickCount - time
-                        if calc >= waittime or Player.Admin:
-                            Player.SafeTeleportTo(5250, 371, -4850)
-                            DataStore.Add("VTPCooldown", Player.SteamID, System.Environment.TickCount)
-                            Player.InventoryNotice("Big Rad Town")
-                            Player.SafeTeleportTo(5250, 371, -4850)
-                        else:
-                            Player.Notice("You have to wait before teleporting again!")
-                    elif args[0] == "Factory":
-                        calc = System.Environment.TickCount - time
-                        if calc >= waittime or Player.Admin:
-                            Player.SafeTeleportTo(6600, 356, -4400)
-                            DataStore.Add("VTPCooldown", Player.SteamID, System.Environment.TickCount)
-                            Player.InventoryNotice("Factory Rad")
-                            Player.SafeTeleportTo(6600, 356, -4400)
-                        else:
-                            Player.Notice("You have to wait before teleporting again!")
-                    elif args[0] == "Hangar":
-                        calc = System.Environment.TickCount - time
-                        if calc >= waittime or Player.Admin:
-                            Player.SafeTeleportTo(6600, 356, -4400)
-                            DataStore.Add("VTPCooldown", Player.SteamID, System.Environment.TickCount)
-                            Player.InventoryNotice("Hangar")
-                            Player.SafeTeleportTo(6600, 356, -4400)
-                        else:
-                            Player.Notice("You have to wait before teleporting again!")
-                    elif args[0] == "Tankers":
-                        calc = System.Environment.TickCount - time
-                        if calc >= waittime or Player.Admin:
-                            Player.SafeTeleportTo(6690, 356, -3880)
-                            DataStore.Add("VTPCooldown", Player.SteamID, System.Environment.TickCount)
-                            Player.InventoryNotice("Oil Tankers")
-                            Player.SafeTeleportTo(6690, 356, -3880)
-                        else:
-                            Player.Notice("You have to wait before teleporting again!")
-                    elif args[0] == "Hackervalley":
-                        calc = System.Environment.TickCount - time
-                        if calc >= waittime or Player.Admin:
-                            Player.SafeTeleportTo(5000, 461, -3000)
-                            DataStore.Add("VTPCooldown", Player.SteamID, System.Environment.TickCount)
-                            Player.InventoryNotice("North Hacker Valley")
-                            Player.SafeTeleportTo(5000, 461, -3000)
-                        else:
-                            Player.Notice("You have to wait before teleporting again!")
-                    elif args[0] == "French":
-                        calc = System.Environment.TickCount - time
-                        if calc >= waittime or Player.Admin:
-                            Player.SafeTeleportTo(6056, 385, -4162)
-                            DataStore.Add("VTPCooldown", Player.SteamID, System.Environment.TickCount)
-                            Player.InventoryNotice("French Valley")
-                            Player.SafeTeleportTo(6056, 385, -4162)
-                        else:
-                            Player.Notice("You have to wait before teleporting again!")
-                    elif args[0] == "Nextvalley":
-                        calc = System.Environment.TickCount - time
-                        if calc >= waittime or Player.Admin:
-                            Player.SafeTeleportTo(4668, 445, -3908)
-                            DataStore.Add("VTPCooldown", Player.SteamID, System.Environment.TickCount)
-                            Player.InventoryNotice("Next Valley")
-                            Player.SafeTeleportTo(4668, 445, -3908)
+                            if self.__PLAYER__ is None:
+                                delay = DataStore.Get("DonatorRank", "DTPDELAY")
+                                Player.Message("Teleporting in " + str(delay) + " seconds.")
+                                self.__LOCNAME__ = DataStore.Get("DonatorRank", "DTP" + args[0])
+                                self.__LOCATION__ = DataStore.Get("DonatorRank", self.__LOCNAME__).split(",")
+                                self.__PLAYER__ = Player
+                                DataStore.Add("DTPCooldown", Player.SteamID, System.Environment.TickCount)
+                                Plugin.CreateTimer("tpdelay", delay * 1000).Start()
+                            else:
+                                Player.Message(self.__PLAYER__.Name + " is using this command, Wait a few seconds")
                         else:
                             workingout = (round(waittime / 1000, 2) / 60) - round(int(calc) / 1000, 2) / 60
                             current = round(workingout, 2)
                             Player.Message(str(current) + " Minutes remaining before you can use this.")
                     else:
-                        Player.Message("Usage: /dtp [Location]")
+                        Player.Message("Usage: /dtp [Number]")
                 else:
-                    Player.Message("Usage: /dtp [Location]")
+                    Player.Message("Usage: /dtp [Number]")
             else:
                 Player.Message("You don't have permission to use this command!")
  
@@ -889,7 +850,6 @@ class DonatorRank:
                     targetname = self.CheckV(Player, args)
                     if targetname is not None:
                         ini = self.BansListIni()
-                        ini.AddSetting("BannedIPs", targetname.IP, targetname.Name + " was banned by: " + Player.Name)
                         ini.AddSetting("BannedIDs", targetname.SteamID, targetname.Name + " was banned by: " + Player.Name)
                         ini.Save()
                         Server.Broadcast("[color red]" + targetname.Name + "[/color] has been banned by: [color red]" + Player.Name)
@@ -906,7 +866,23 @@ class DonatorRank:
                     Player.Message("Type /cban to cancel this action")
             else:
                 Player.Message("You don't have permission to use this command!")
- 
+
+        elif cmd == "munban":
+            users = self.getUserIni()
+            if users.GetSetting(Player.SteamID, "CanBan") == "true" or Player.Admin:
+                if len(args) > 0:
+                    ini = self.BansListIni()
+                    if ini.GetSetting("BannedIDs", args[0]) is not None:
+                        ini.DeleteSetting("BannedIDs", args[0])
+                        ini.Save()
+                        Player.Message("[color red]" + args[0] + "[/color] has been unbanned, They can now connect!")
+                    else:
+                        Player.Message("Can not find the ID: " + args[0])
+                else:
+                    Player.Message("Usage: /munban [SteamID]")
+            else:
+                Player.Message("You don't have permission to use this command!")
+
         elif cmd == "cban":
             users = self.getUserIni()
             if users.GetSetting(Player.SteamID, "CanBan") == "true" or Player.Admin:
@@ -961,7 +937,25 @@ class DonatorRank:
                     Player.Message("usage: /info [name]")
             else:
                 Player.Message("You don't have permission to use this command!")
- 
+
+    def killtimer(self):
+        timer = Plugin.GetTimer("tpdelay")
+        if timer is None:
+            return
+        timer.Stop()
+        Plugin.Timers.Remove("tpdelay")
+
+    def tpdelayCallback(self):
+        self.killtimer()
+        Player = self.__PLAYER__
+        location = self.__LOCATION__
+        name = self.__LOCNAME__
+        Player.SafeTeleportTo(float(location[0]), float(location[1]), float(location[2]))
+        Player.InventoryNotice(name)
+        self.__PLAYER__ = None
+        self.__LOCATION__ = None
+        self.__LOCNAME__ = None
+
     def On_PlayerConnected(self, Player):
         try:
             if self.isBanned(Player):
@@ -1033,6 +1027,7 @@ class DonatorRank:
                     ocolour = DataStore.Get("DonatorRank", "OwnerColour")
                     Server.BroadcastFrom("[Owner]♚" + Player.Name, ocolour + chatmsg)
                     ChatMessage.NewText = "*%"
+                    #Having these to replace the chat message seems to stop errors in the console
                     return
                 elif Player.Admin:
                     chatmsg = str(ChatMessage)[1:-1]
