@@ -10,7 +10,7 @@ import Fougerite
 
 class StackSizes:
     def On_ItemsLoaded(self, ItemsBlocks):
-        if not Plugin.IniExists("Settings"):
+        """if not Plugin.IniExists("Settings"):
             Plugin.CreateIni("Settings")
             ini = Plugin.GetIni("Settings")
             ini.AddSetting("Items", "Metal Ore", "250")
@@ -69,4 +69,12 @@ class StackSizes:
         ini = Plugin.GetIni("Settings")
         keys = ini.EnumSection("Items")
         for key in keys:
-            ItemsBlocks.Find(key)._maxUses = int(ini.GetSetting("Items", key))
+            ItemsBlocks.Find(key)._maxUses = int(ini.GetSetting("Items", key))"""
+        for block in ItemsBlocks:
+            if not Plugin.IniExists("Log"):
+                Plugin.CreateIni("Log")
+                ini = Plugin.GetIni("Log")
+                ini.Save()
+            ini = Plugin.GetIni("Log")
+            ini.AddSetting("Items", str(block), str(block._maxUses))
+            ini.Save()
