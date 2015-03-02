@@ -27,6 +27,7 @@ class RemoveAll:
         if DataStore.Get(Player.SteamID, "RemoveAll") == "true":
             for x in HurtEvent.Entity.GetLinkedStructs():
                 x.Destroy()
+                #HurtEvent.Entity.Destroy()
             Player.Message("Structure removed!")
 
 

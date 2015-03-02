@@ -1113,7 +1113,10 @@ class DonatorRank:
  
     def isBanned(self, Player):
         try:
-            if self.BansListIni().GetSetting("BannedIDs", Player.SteamID) is not None:
+            ini = self.BansListIni()
+            if ini.GetSetting("BannedIPs", Player.IP) is not None:
+                return True
+            elif ini.GetSetting("BannedIDs", Player.SteamID) is not None:
                 return True
             else:
                 return None
@@ -1151,6 +1154,7 @@ class DonatorRank:
             elif DataStore.Get("ModBan", hit.Attacker.SteamID) == "on":
                 ini = self.BansListIni()
                 hit.DamageAmount = 0
+                ini.AddSetting("BannedIPs", hit.Victim.IP, hit.Victim.Name + " was banned by: " + hit.Attacker.Name)
                 ini.AddSetting("BannedIDs", hit.Victim.SteamID, hit.Victim.Name + " was banned by: " + hit.Attacker.Name)
                 ini.Save()
                 Server.Broadcast("[color red]" + hit.Victim.Name + "[/color] has been banned by: [color red]" + hit.Attacker.Name)
