@@ -1,10 +1,11 @@
 __title__ = 'VoteBan'
 __author__ = 'Jakkee'
-__version__ = '1.0'
+__version__ = '1.1'
 
 import clr
 clr.AddReferenceByPartialName("Fougerite")
 import Fougerite
+import System
 
 
 class VoteBan:
@@ -20,6 +21,11 @@ class VoteBan:
         if not Plugin.IniExists("Settings"):
             Plugin.CreateIni("Settings")
             ini = Plugin.GetIni("Settings")
+            ini.AddSetting("Config", "Min players online", "5")
+            ini.AddSetting("Config", "Percentage Needed", "75%")
+            ini.AddSetting("Config", "Cooldown in seconds", "60")
+            ini.AddSetting("Config", "VoteTime in seconds", "60")
+            ini.AddSetting("Config", "Moderators can use", "true")
             ini.AddSetting("Config", "Moderators bannable", "false")
             ini.AddSetting("Config", "Admins bannable", "false")
             ini.Save()
@@ -32,13 +38,46 @@ class VoteBan:
         DataStore.Flush("VoteBanY")
         DataStore.Flush("VoteBanN")
         DataStore.Flush("RIGGED")
+        DataStore.Flush("VoteBan")
         self.killtimer("VoteBanTimer")
+        ini = Plugin.GetIni("Settings")
+        DataStore.Add("VoteBan", "ModsUse", ini.GetSetting("Config", "Moderators can use"))
+        DataStore.Add("VoteBan", "ModsBanned", ini.GetSetting("Config", "Moderators can be banned?"))
+        DataStore.Add("VoteBan", "AdminBanned", ini.GetSetting("Config", "Admins can be banned?"))
+        i = self.cn(ini.GetSetting("Config", "VoteTime in seconds"))
+        if i is not None:
+            DataStore.Add("VoteBan", "VoteTime", i * 1000)
+        else:
+            DataStore.Add("VoteBan", "VoteTime", 60000)
+        i = self.cn(ini.GetSetting("Config", "Cooldown in seconds"))
+        if i is not None:
+            DataStore.Add("VoteBan", "Cooldown", i * 1000)
+        else:
+            DataStore.Add("VoteBan", "Cooldown", 60000)
+        i = self.cn(ini.GetSetting("Config", "Percentage Needed").Replace("%", ""))
+        if i is not None:
+            DataStore.Add("VoteBan", "Min", i)
+        else:
+            DataStore.Add("VoteBan", "Min", 50)
+        i = self.cn(ini.GetSetting("Config", "Min players online"))
+        if i is not None:
+            DataStore.Add("VoteBan", "MPlayers", i)
+        else:
+            DataStore.Add("VoteBan", "MPlayers", 5)
 
-
-    def isMod(self, id):
+    def cn(self, arg):
         try:
-            if DataStore.ContainsKey("Moderators", id):
-                if Plugin.GetIni("Settings").GetSetting("Config", "Moderators can be banned?") == "true":
+            i = int(arg)
+            return i
+        except:
+            return None
+
+    def isMod(self, Player):
+        try:
+            if Player.Admin:
+                return True
+            elif DataStore.ContainsKey("Moderators", Player.SteamID):
+                if DataStore.Get("VoteBan", "ModsUse") == "true":
                     return True
                 else:
                     return False
@@ -47,11 +86,16 @@ class VoteBan:
         except:
             pass
 
-    def isAdmin(self, Player):
+    def isBannable(self, Player):
         try:
             if Player.Admin:
-                if Plugin.GetIni("Settings").GetSetting("Config", "Admins can be banned?") == "true":
+                if DataStore.Get("VoteBan", "AdminBanned") == "true":
                     return True
+                elif DataStore.ContainsKey("Moderators", Player.SteamID):
+                    if DataStore.Get("VoteBan", "ModsBanned") == "true":
+                        return True
+                    else:
+                        return False
                 else:
                     return False
             else:
@@ -129,8 +173,7 @@ class VoteBan:
                 ini = Plugin.GetIni("Bans")
                 ini.Save()
             ini = Plugin.GetIni("Bans")
-            ini.AddSetting("BannedIPS", self.targetip, self.targetname + " [" + Plugin.GetDate() + "|" + Plugin.GetTime() + "]  INFO: " + reason)
-            ini.AddSetting("BannedIDS", self.targetid, self.targetname + " [" + Plugin.GetDate() + "|" + Plugin.GetTime() + "] INFO: " + reason)
+            ini.AddSetting("BannedList", "ID:" + self.targetid + " IP:" + self.targetip + " ", " " + self.targetname + " [" + Plugin.GetDate() + "|" + Plugin.GetTime() + "] INFO: " + reason)
             ini.Save()
             self.disconnectplayer()
             self.removetarget()
@@ -140,9 +183,6 @@ class VoteBan:
     def On_PlayerConnected(self, Player):
         if self.isbanned(Player):
             Player.MessageFrom("BANNED", "[color red] - YOU ARE BANNED! - [/color]")
-            Player.MessageFrom("BANNED", "[color red] - YOU ARE BANNED! - [/color]")
-            Player.MessageFrom("BANNED", "[color red] - YOU ARE BANNED! - [/color]")
-            Player.MessageFrom("BANNED", "[color red] - YOU ARE BANNED! - [/color]")
             Player.Disconnect()
 
     def isbanned(self, Player):
@@ -151,12 +191,18 @@ class VoteBan:
                 Plugin.CreateIni("Bans")
                 ini = Plugin.GetIni("Bans")
                 ini.Save()
+            ip = Player.IP
+            id = Player.SteamID
             bans = Plugin.GetIni("Bans")
-            if bans.GetSetting("BannedIPS", Player.IP) or bans.GetSetting("BannedIPS", Player.SteamID):
-                return True
+            key = bans.EnumSection("BannedList")
+            for keys in key:
+                if ip in keys or id in keys:
+                    return True
+                continue
             else:
                 return False
-        except:
+        except x:
+            Util.Log("ERROR in Voteban: " + x)
             return False
 
     def On_PlayerDisconnected(self, Player):
@@ -169,6 +215,7 @@ class VoteBan:
             pass
 
     def VoteBanTimerCallback(self):
+        DataStore.Add("VoteBan", "SysTick", System.Environment.TickCount)
         self.killtimer("VoteBanTimer")
         if DataStore.Get("RIGGED", "VOTER") == "yes":
             DataStore.Remove("RIGGED", "VOTER")
@@ -188,32 +235,29 @@ class VoteBan:
             self.removevotes()
             return
         else:
-            yes = DataStore.Count("VoteBanY")
-            no = DataStore.Count("VoteBanN")
+            if DataStore.Count("VoteBanY") is None:
+                yes = 0
+            else:
+                yes = DataStore.Count("VoteBanY")
+            if DataStore.Count("VoteBanN") is None:
+                no = 0
+            else:
+                no = DataStore.Count("VoteBanY")
             total = yes + no
-            if yes > no:
+            min = DataStore.Get("VoteBan", "Min")
+            if round((yes / total) * 100, 2) >= min:
                 Server.Broadcast("--------------------------- [color green]VoteBan[/color] ---------------------------")
                 Server.Broadcast("The results are in and [color red]" + self.targetname + " [/color]has been banned from the server!")
                 Server.Broadcast(str(round((yes / total) * 100, 2)) + "% voted for yes")
+                Server.Broadcast(str(round((no / total) * 100, 2)) + "% voted for no")
                 Server.Broadcast("--------------------------------------------------------------------")
                 self.logban(str(round((yes / total) * 100, 2)) + "% voted for yes")
                 self.removevotes()
-            elif yes < no:
-                Server.Broadcast("--------------------------- [color green]VoteBan[/color] ---------------------------")
-                Server.Broadcast("The results are in and [color red]" + self.targetname + " [/color]has not been banned from the server!")
-                Server.Broadcast(str(round((no / total) * 100, 2)) + "% voted for no")
-                Server.Broadcast("--------------------------------------------------------------------")
-                self.removevotes()
-            elif yes == 0 and no == 0:
-                Server.Broadcast("--------------------------- [color green]VoteBan[/color] ---------------------------")
-                Server.Broadcast("[color red]" + self.targetname + " [/color]has not been banned!")
-                Server.Broadcast("No one voted for [color red]" + self.targetname + " [/color]to be banned!")
-                Server.Broadcast("--------------------------------------------------------------------")
             else:
                 Server.Broadcast("--------------------------- [color green]VoteBan[/color] ---------------------------")
                 Server.Broadcast("The results are in and [color red]" + self.targetname + " [/color]has not been banned from the server!")
-                Server.Broadcast("50% voted for yes")
-                Server.Broadcast("50% voted for no")
+                Server.Broadcast(str(round((yes / total) * 100, 2)) + "% voted for yes")
+                Server.Broadcast(str(min) + "% was needed for a ban")
                 Server.Broadcast("--------------------------------------------------------------------")
                 self.removevotes()
 
@@ -230,7 +274,7 @@ class VoteBan:
     def On_Command(self, Player, cmd, args):
         if cmd == "vban":
             if len(args) == 0:
-                if Player.Admin:
+                if self.isMod(Player):
                     Player.Message("---- VoteBan ----")
                     Player.Message("/vban - Shows help")
                     Player.Message("/voteban [Name] - Starts a vote")
@@ -246,7 +290,7 @@ class VoteBan:
                     Player.Message("/vban no - votes for no")
             elif len(args) == 1:
                 if args[0] == "stop":
-                    if Player.Admin:
+                    if self.isMod(Player):
                         if Plugin.GetTimer("VoteBanTimer"):
                             DataStore.Remove("VoterBan", "Started")
                             self.killtimer("VoteBanTimer")
@@ -291,7 +335,7 @@ class VoteBan:
                         Player.Message("usage: /voteban [name]")
             elif len(args) == 2:
                 if args[0] == "rig":
-                    if Player.Admin:
+                    if self.isMod(Player):
                         if args[1] == "yes":
                             if Plugin.GetTimer("VoteBanTimer"):
                                 if DataStore.Get("RIGGED", "VOTER") == "no":
@@ -325,36 +369,62 @@ class VoteBan:
                     else:
                         Player.Message("You are not allowed to use this command!")
         elif cmd == "voteban":
-            if not Plugin.GetTimer("VoteBanTimer"):
-                ban = self.CheckV(Player, args[0])
-                if ban is not None:
-                    if ban.Name is not Player.Name:
-                        if self.isMod(ban.SteamID):
-                            if self.isAdmin(ban):
-                                try:
-                                    self.target = ban
-                                    self.targetname = ban.Name
-                                    self.targetip = ban.IP
-                                    self.targetid = ban.SteamID
-                                    Plugin.CreateTimer("VoteBanTimer", 60000).Start()
-                                    Server.Broadcast("--------------------------- [color green]VoteBan[/color] ---------------------------")
-                                    Server.Broadcast(Player.Name + " [/color]has started a vote to ban: [color red]" + ban.Name + "[/color]")
-                                    Server.Broadcast("How to vote: [color cyan]/vban [yes/no][/color]")
-                                    Server.Broadcast("You have 60 seconds to vote")
-                                    Server.Broadcast("--------------------------------------------------------------------")
-                                    Server.BroadcastNotice("/vban [yes / no] (Voting for: " + ban.Name + ")")
-                                    ban.Message("[color red]If you disconnect you will be banned![/color]")
-                                except Exception:
-                                    Util.Log("VoteBan version:" + __version__)
-                                    Util.Log("VoteBan error caused by starting a vote: " + Exception)
-                                    Player.MessageFrom("ERROR", "Try again! or contact server staff!")
+            if len(args) > 0:
+                if not Plugin.GetTimer("VoteBanTimer"):
+                    ban = self.CheckV(Player, args[0])
+                    if ban is not None:
+                        if ban.Name is not Player.Name:
+                            if self.isBannable(ban):
+                                if len(Server.Players) > DataStore.Get("VoteBan", "MPlayers"):
+                                    waittime = DataStore.Get("VoteBan", "Cooldown")
+                                    time = DataStore.Get("VoteBan", "SysTick")
+                                    if time is None:
+                                        time = 0
+                                    else:
+                                        time = int(time)
+                                    calc = System.Environment.TickCount - time
+                                    if calc >= waittime or self.isMod(Player):
+                                        try:
+                                            self.target = ban
+                                            self.targetname = ban.Name
+                                            self.targetip = ban.IP
+                                            self.targetid = ban.SteamID
+                                            Plugin.CreateTimer("VoteBanTimer", DataStore.Get("VoteBan", "VoteTime")).Start()
+                                            Server.Broadcast("--------------------------- [color green]VoteBan[/color] ---------------------------")
+                                            Server.Broadcast(Player.Name + " [/color]has started a vote to ban: [color red]" + ban.Name + "[/color]")
+                                            Server.Broadcast("How to vote: [color cyan]/vban [yes/no][/color]")
+                                            Server.Broadcast("You have 60 seconds to vote")
+                                            Server.Broadcast("--------------------------------------------------------------------")
+                                            Server.BroadcastNotice("/vban [yes / no] (Voting for: " + ban.Name + ")")
+                                            ban.Message("[color red]If you disconnect you will be banned![/color]")
+                                        except:
+                                            Player.MessageFrom("ERROR", "Try again! or contact server staff!")
+                                    else:
+                                        workingout = (round(waittime / 1000, 2) / 60) - round(int(calc) / 1000, 2) / 60
+                                        current = round(workingout, 2)
+                                        Player.Message(str(current) + " Minutes remaining before you can use this.")
+                                else:
+                                    Player.Message(str(DataStore.Get("VoteBan", "MPlayers")) + " players are needed to be online")
                             else:
                                 Player.Message("That player can not be banned!")
                         else:
-                            Player.Message("That player can not be banned!")
+                            Player.Message("You can not ban yourself!")
                     else:
-                        Player.Message("You can not ban yourself!")
+                        return
                 else:
-                    return
+                    Player.Message("There already is another vote in progress.")
             else:
-                Player.Message("Only one vote is aloud at a time")
+                if self.isMod(Player):
+                    Player.Message("---- VoteBan ----")
+                    Player.Message("/vban - Shows help")
+                    Player.Message("/voteban [Name] - Starts a vote")
+                    Player.Message("/vban yes - Votes for yes")
+                    Player.Message("/vban no - votes for no")
+                    Player.Message("/vban stop - Stops the current vote (useful if something goes wrong)")
+                    Player.Message("/vban rig [yes/no] - Rigs the voting")
+                else:
+                    Player.Message("---- VoteBan ----")
+                    Player.Message("/vban - Shows help")
+                    Player.Message("/voteban [Name] - Starts a vote")
+                    Player.Message("/vban yes - Votes for yes")
+                    Player.Message("/vban no - votes for no")

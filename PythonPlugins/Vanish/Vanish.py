@@ -1,6 +1,6 @@
 __title__ = 'Vanish'
 __author__ = 'Jakkee'
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 
 import clr
 clr.AddReferenceByPartialName("Fougerite")
@@ -12,16 +12,16 @@ class Vanish:
         if cmd == "vanish":
             if Plugin.GetIni("Settings").GetSetting("Config", "Enabled") == 'true':
                 if Player.Admin or self.isMod(Player.SteamID):
-                    if Player.Health == 0.0:
-                        Player.Health = 100
+                    if Player.PlayerClient.controllable.health == 0.0:
+                        Player.PlayerClient.controllable.health = 100
                         Player.Notice("Players can now see you again!")
                     else:
-                        Player.Health = (Player.Health - Player.Health)
+                        Player.PlayerClient.controllable.health = (Player.PlayerClient.controllable.health - Player.PlayerClient.controllable.health)
                         Player.Notice("Players can not see you now")
                 else:
                     Player.Message("You are not allowed to use this command!")
             else:
-                Player.Message("Plugin has been disabled in the settings.ini file!")
+                Player.Message("Plugin has been disabled")
 
     def On_PluginInit(self):
         Util.ConsoleLog(__title__ + " by " + __author__ + " Version: " + __version__ + " loaded.", False)

@@ -9,5 +9,6 @@ import Fougerite
 
 class Notice:
     def On_PlayerConnected(self, Player):
-        Player.SendCommand("deathscreen.reason " + '"' + "              WELCOME TO XHTs DEV SERVER!                         We test plugins on here first!                                    Developed by Jakkee. (Also you're not dead)" + '"')
-        Player.SendCommand("deathscreen.show")
+        Util.Log("Blahh")
+        #Player.SendCommand("deathscreen.reason " + '"' + "              WELCOME TO XHTs DEV SERVER!                         We test plugins on here first!                                    Developed by Jakkee. (Also you're not dead)" + '"')
+        #Player.SendCommand("deathscreen.show")

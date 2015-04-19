@@ -51,44 +51,45 @@ class BuildingRestriction:
             return False
 
     def On_EntityDeployed(self, Player, Entity):
-        if Entity.Name == "WoodPillar":
-            if self.isAdmin(Player):
+        if Entity.Name == "WoodPillar" or "MetalPillar":
+            """if self.isAdmin(Player):
                 return
             elif self.isMod(Player.SteamID):
                 return
-            else:
-                height = round(int(DataStore.Get("BuildingRestriction", "Max Height")), 0)
-                for foundation in Entity.GetLinkedStructs():
-                    if foundation.Name != "WoodFoundation":
-                        continue
-                    if height < Entity.Y - foundation.Y:
-                        try:
-                            Entity.Destroy()
-                            UnityEngine.Object.Destroy(Entity.Object)
-                            Player.Inventory.AddItem("Wood Pillar")
-                            Player.InventoryNotice("1 x Wood Pillar")
-                            Player.Message("You are not allowed to build more than [ " + str(DataStore.Get("BuildingRestriction", "Max Height") / 4) + " ] pillars high")
-                        except:
-                            pass
-                        break
-        elif Entity.Name == "WoodFoundation":
-            if self.isAdmin(Player):
+            else:"""
+            height = round(int(DataStore.Get("BuildingRestriction", "Max Height")), 0)
+            for pillar in Entity.GetLinkedStructs():
+                if pillar.Name != "WoodPillar" or "MetalPillar":
+                    continue
+                if height < Entity.Y - pillar.Y:
+                    Server.Broadcast("Callback")
+                    try:
+                        Player.Inventory.AddItem(Entity.Name, 1)
+                        Player.InventoryNotice("1 x " + Entity.Name)
+                        Entity.Destroy()
+                        Player.Message("Max build height reached for this base [ " + str(DataStore.Get("BuildingRestriction", "Max Height") / 4) + " units tall ]")
+                    except:
+                        pass
+                    break
+        elif Entity.Name == "WoodFoundation" or "MetalFoundation":
+            """if self.isAdmin(Player):
                 return
             elif self.isMod(Player.SteamID):
                 return
-            else:
-                count = 0
-                total = int(DataStore.Get("BuildingRestriction", "Max Foundations"))
-                for foundation in Entity.GetLinkedStructs():
-                    if foundation.Name != "WoodFoundation":
-                        continue
-                    count += 1
-                    if count == total:
-                        try:
-                            Entity.Destroy()
-                            Player.Inventory.AddItem("Wood Foundation")
-                            Player.InventoryNotice("1 x Wood Foundation")
-                            Player.Message("You are not allowed to place more than [ " + str(DataStore.Get("BuildingRestriction", "Max Foundations")) + " ] foundations")
-                        except:
-                            pass
-                        break
+            else:"""
+            count = 0
+            total = int(DataStore.Get("BuildingRestriction", "Max Foundations"))
+            for foundation in Entity.GetLinkedStructs():
+                if foundation.Name != "WoodFoundation" or "MetalFoundation":
+                    continue
+                count += 1
+                if count == total:
+                    Server.Broadcast("Callback")
+                    try:
+                        Player.Inventory.AddItem(Entity.Name, 1)
+                        Player.InventoryNotice("1 x " + Entity.Name)
+                        Entity.Destroy()
+                        Player.Message("Max foundations reached for this base [ " + str(DataStore.Get("BuildingRestriction", "Max Foundations")) + " Foundations ]")
+                    except:
+                        pass
+                    break

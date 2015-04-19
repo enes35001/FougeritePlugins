@@ -1,10 +1,11 @@
 __title__ = 'TimeVoter'
 __author__ = 'Jakkee'
-__version__ = '1.0'
+__version__ = '1.1'
 
 import clr
 clr.AddReferenceByPartialName("Fougerite")
 import Fougerite
+import System
 
 
 class TimeVoter:
@@ -13,22 +14,43 @@ class TimeVoter:
         if not Plugin.IniExists("Settings"):
             Plugin.CreateIni("Settings")
             ini = Plugin.GetIni("Settings")
-            ini.AddSetting("Config", "ModeratorsCanUse", "true")
+            ini.AddSetting("Config", "Percentage Needed", "60%")
+            ini.AddSetting("Config", "Cooldown in seconds", "60")
+            ini.AddSetting("Config", "VoteTime in seconds", "60")
+            ini.AddSetting("Config", "Moderators can use", "true")
             ini.Save()
         DataStore.Flush("VoteDay")
         DataStore.Flush("VoteNight")
         DataStore.Flush("Voter")
+        DataStore.Flush("TimeVoter")
         DataStore.Flush("RIGGED")
         self.killtimer("VotingTimer")
-
-    def isMod(self, id):
-        if DataStore.ContainsKey("Moderators", id):
-            if Plugin.GetIni("Settings").GetSetting("Config", "ModeratorsCanUse") == "true":
-                return True
-            else:
-                return False
+        ini = Plugin.GetIni("Settings")
+        DataStore.Add("TimeVoter", "Mods", ini.GetSetting("Config", "Moderators can use"))
+        i = self.cn(ini.GetSetting("Config", "VoteTime in seconds"))
+        if i is not None:
+            DataStore.Add("TimeVoter", "VoteTime", i * 1000)
         else:
-            return False
+            DataStore.Add("TimeVoter", "Cooldown", 60000)
+        i = self.cn(ini.GetSetting("Config", "Cooldown in seconds"))
+        if i is not None:
+            DataStore.Add("TimeVoter", "Cooldown", i * 1000)
+        else:
+            DataStore.Add("TimeVoter", "Cooldown", 60000)
+        i = self.cn(ini.GetSetting("Config", "Percentage Needed").Replace("%", ""))
+        if i is not None:
+            DataStore.Add("TimeVoter", "Min", i)
+        else:
+            DataStore.Add("TimeVoter", "Min", 50)
+
+    def isMod(self, Player):
+        if Player.Admin:
+            return True
+        elif DataStore.ContainsKey("Moderators", Player.SteamID):
+            if DataStore.Get("TimeVoter", "Mods") == "true":
+                return True
+        return False
+
 
     def killtimer(self, name):
         timer = Plugin.GetTimer(name)
@@ -36,6 +58,13 @@ class TimeVoter:
             return
         timer.Stop()
         Plugin.Timers.Remove(name)
+
+    def cn(self, arg):
+        try:
+            i = int(arg)
+            return i
+        except:
+            return None
 
     def checkstringifnumber(self, arg):
         try:
@@ -59,13 +88,13 @@ class TimeVoter:
             pass
 
     def VotingTimerCallback(self):
+        DataStore.Add("TimeVoter", "SysTick", System.Environment.TickCount)
         self.killtimer("VotingTimer")
         if DataStore.Get("RIGGED", "VOTER") == "night":
             DataStore.Remove("RIGGED", "VOTER")
-            World.Time = 18
             Server.Broadcast("--------------------------- [color green]TimeVoter[/color] ---------------------------")
-            Server.Broadcast("The results are in and the servers time has been changed to Night!")
-            Server.Broadcast("55.0% voted for Night")
+            Server.Broadcast("The results are in and the servers time has not been changed!")
+            Server.Broadcast("85.0% voted for Night")
             Server.Broadcast("--------------------------------------------------------------------")
             self.removevotes()
             return
@@ -81,25 +110,19 @@ class TimeVoter:
         else:
             day = DataStore.Count("VoteDay")
             night = DataStore.Count("VoteNight")
+            min = DataStore.Get("TimeVoter", "Min")
             total = day + night
-            if day > night:
+            if round((day / total) * 100, 2) > min:
                 World.Time = 6
                 Server.Broadcast("--------------------------- [color green]TimeVoter[/color] ---------------------------")
                 Server.Broadcast("The results are in and the servers time has been changed to Day!")
                 Server.Broadcast(str(round((day / total) * 100, 2)) + "% voted for Day")
                 Server.Broadcast("--------------------------------------------------------------------")
                 self.removevotes()
-            elif day < night:
-                World.Time = 18
-                Server.Broadcast("--------------------------- [color green]TimeVoter[/color] ---------------------------")
-                Server.Broadcast("The results are in and the servers time has been changed to Night!")
-                Server.Broadcast(str(round((night / total) * 100, 2)) + "% voted for Night")
-                Server.Broadcast("--------------------------------------------------------------------")
-                self.removevotes()
             else:
                 Server.Broadcast("--------------------------- [color green]TimeVoter[/color] ---------------------------")
                 Server.Broadcast("The results are in and the servers time has not been changed!")
-                Server.Broadcast("There was an even amount of votes")
+                Server.Broadcast(str(round((night / total) * 100, 2)) + "% voted for Night")
                 Server.Broadcast("--------------------------------------------------------------------")
                 self.removevotes()
 
@@ -121,14 +144,14 @@ class TimeVoter:
                 Player.Message("/vote start - Starts a vote")
                 Player.Message("/vote day - Votes for day")
                 Player.Message("/vote night - votes for night")
-                if Player.Admin or isMod(Player.SteamID):
+                if Player.Admin or self.isMod(Player):
                     Player.Message("-Admin Commands-")
                     Player.Message("/vote stop - Stops the current vote (useful if something goes wrong)")
                     Player.Message("/vote rig [day/night] - Rigs the voting")
                     Player.Message("/settime [time] - Sets the time")
             elif len(args) == 1:
                 if args[0] == "stop":
-                    if Player.Admin or isMod(Player.SteamID):
+                    if self.isMod(Player):
                         if DataStore.Get("Voter", "Started") == "true":
                             DataStore.Remove("Voter", "Started")
                             self.killtimer("VotingTimer")
@@ -143,16 +166,31 @@ class TimeVoter:
                     else:
                         Player.Message("You are not allowed to use that command!")
                 elif args[0] == "start":
-                    if DataStore.Get("Voter", "Started") == "true":
-                        Player.Message("There is already a vote in progress")
+                    if not DataStore.Get("Voter", "Started") == "true":
+                        waittime = DataStore.Get("TimeVoter", "Cooldown")
+                        time = DataStore.Get("TimeVoter", "SysTick")
+                        if time is None:
+                            time = 0
+                        else:
+                            time = int(time)
+                        calc = System.Environment.TickCount - time
+                        if calc >= waittime or self.isMod(Player):
+                            DataStore.Add("Voter", "Started", "true")
+                            Plugin.CreateTimer("VotingTimer", int(DataStore.Get("TimeVoter", "VoteTime"))).Start()
+                            Server.Broadcast("--------------------------- [color green]TimeVoter[/color] ---------------------------")
+                            Server.Broadcast(Player.Name + " has started a vote to change the servers time!")
+                            Server.Broadcast("How to vote: /vote [day/night]")
+                            Server.Broadcast("You have 60 seconds to vote")
+                            Server.Broadcast("--------------------------------------------------------------------")
+                            DataStore.Add("VoteDay", Player.SteamID, "day")
+                            Player.Message("You have voted for Day!")
+                        else:
+                            workingout = (round(waittime / 1000, 2) / 60) - round(int(calc) / 1000, 2) / 60
+                            current = round(workingout, 2)
+                            Player.Message(str(current) + " Minutes remaining before you can use this.")
                     else:
-                        DataStore.Add("Voter", "Started", "true")
-                        Plugin.CreateTimer("VotingTimer", 60000).Start()
-                        Server.Broadcast("--------------------------- [color green]TimeVoter[/color] ---------------------------")
-                        Server.Broadcast(Player.Name + " has started a vote to change the servers time!")
-                        Server.Broadcast("How to vote: /vote [day/night]")
-                        Server.Broadcast("You have 60 seconds to vote")
-                        Server.Broadcast("--------------------------------------------------------------------")
+                        Player.Message("There is already a vote in progress")
+
                 elif args[0] == "day":
                     if DataStore.Get("Voter", "Started") == "true":
                         if DataStore.Get("VoteNight", Player.SteamID) == "night":
@@ -183,7 +221,7 @@ class TimeVoter:
                         Player.Message("usage: /vote start")
             elif len(args) == 2:
                 if args[0] == "rig":
-                    if Player.Admin or isMod(Player.SteamID):
+                    if self.isMod(Player):
                         if args[1] == "day":
                             if DataStore.Get("Voter", "Started") == "true":
                                 if DataStore.Get("RIGGED", "VOTER") == "night":
@@ -217,7 +255,7 @@ class TimeVoter:
                     else:
                         Player.Message("You are not allowed to use this command!")
         elif cmd == "settime":
-            if Player.Admin or isMod(Player.SteamID):
+            if self.isMod(Player):
                 if len(args) == 0:
                     Player.Message("usage: /settime [time]")
                 elif len(args) == 1:

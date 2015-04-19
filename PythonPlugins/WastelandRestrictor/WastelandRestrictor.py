@@ -19,8 +19,7 @@ class WastelandRestrictor:
         ini = Plugin.GetIni("Settings")
         DataStore.Add("WasteLand", "Message", ini.GetSetting("Settings", "DisplayMessage"))
 
-    def On_EntityDeployed(self, Player, Entity):
-        if Entity.X < 3000 or Entity.Z > 1300:
-            Entity.Destroy()
-            if DataStore.Get("WasteLand", "Message") == "true":
-                Player.Message("You can not build this far out!")
+    #def On_EntityDeployed(self, Player, Entity):
+        #if Entity.X < 6000 or Entity.Z < -3500:
+            #if DataStore.Get("WasteLand", "Message") == "true":
+                #Player.Message("You can not build this far out!")
