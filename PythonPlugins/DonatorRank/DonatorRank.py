@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 __title__ = 'DonatorRank'
 __author__ = 'Jakkee'
-__version__ = '1.4.3'
+__version__ = '1.5'
  
 import clr
 clr.AddReferenceByPartialName("Fougerite")
@@ -11,12 +11,6 @@ import Fougerite
  
  
 class DonatorRank:
-
-#These are for DTP / VTP
-    __PLAYER__ = None
-    __LOCATION__ = None
-    __LOCNAME__ = None
-
     def On_PluginInit(self):
         Util.ConsoleLog(__title__ + " by " + __author__ + " Version: " + __version__ + " loaded.", False)
         if not Plugin.IniExists("Settings"):
@@ -29,22 +23,19 @@ class DonatorRank:
             ini.AddSetting("Settings", "OwnerColour", "[color cyan]")
             ini.AddSetting("Settings", "AdminColour", "[color cyan]")
             ini.AddSetting("Settings", "LogTps", "true")
-            ini.AddSetting("Settings", "LogKicks", "true")
             ini.AddSetting("Settings", "LogBroadcast", "true")
-            ini.AddSetting("Settings", "PlayerSetHome", "Only works with HomeSystem installed (This line is not a setting)")
+            ini.AddSetting("Settings", ";Below only works with HomeSystem installed", "")
             ini.AddSetting("Settings", "PlayerMaxhomes", "1")
             ini.AddSetting("ModSettings", "ModeratorColour", "[color white]")
             ini.AddSetting("ModSettings", "Maxhomes", "3")
             ini.AddSetting("DonatorSettings", "DonatorColour", "[color white]")
             ini.AddSetting("DonatorSettings", "Maxhomes", "3")
-            ini.AddSetting("DonatorSettings", "LVL1KitCooldown", "80000")
-            ini.AddSetting("DonatorSettings", "LVL2KitCooldown", "80000")
-            ini.AddSetting("DonatorSettings", "TPCooldown", "20000")
+            ini.AddSetting("DonatorSettings", "LVL1KitCooldown", "80")
+            ini.AddSetting("DonatorSettings", "LVL2KitCooldown", "80")
             ini.AddSetting("VIPSettings", "VIPColour", "[color white]")
             ini.AddSetting("VIPSettings", "Maxhomes", "2")
-            ini.AddSetting("VIPSettings", "LVL1KitCooldown", "120000")
-            ini.AddSetting("VIPSettings", "LVL2KitCooldown", "120000")
-            ini.AddSetting("VIPSettings", "TPCooldown", "30000")
+            ini.AddSetting("VIPSettings", "LVL1KitCooldown", "120")
+            ini.AddSetting("VIPSettings", "LVL2KitCooldown", "120")
             ini.AddSetting("VKIT_Level1", "Inv1", "P250")
             ini.AddSetting("VKIT_Level1", "Qty1", "1")
             ini.AddSetting("VKIT_Level1", "Inv2", "9mm Ammo")
@@ -121,11 +112,14 @@ class DonatorRank:
         if not Plugin.IniExists("TPLocations"):
             Plugin.CreateIni("TPLocations")
             ini = Plugin.GetIni("TPLocations")
-            ini.AddSetting("EXAMPLE", "location name here", "X, Y, Z")
-            ini.AddSetting("EXAMPLE", "ADDING A NEW LOCATION", "Just add the location name plus X/Y/Z location (Add 1 to the Y so players don't glitch into the ground)")
-            ini.AddSetting("EXAMPLE", "COOLDOWNS", "Cooldowns are in seconds")
-            ini.AddSetting("Settings", "VTP TPDelay", "5")
-            ini.AddSetting("Settings", "DTP TPDelay", "5")
+            ini.AddSetting("EXAMPLE", ";location name here", "X, Y, Z")
+            ini.AddSetting("EXAMPLE", ";ADDING A NEW LOCATION", "Just add the location name plus X/Y/Z location (Add 1 to the Y so players don't glitch into the ground)")
+            ini.AddSetting("EXAMPLE", ";COOLDOWNS/DELAYS", "Cooldowns/delays are in seconds")
+            ini.AddSetting("EXAMPLE", ";VIP House", "-1000, 450, 200")
+            ini.AddSetting("Settings", "VTP Delay", "5")
+            ini.AddSetting("Settings", "VTP Cooldown", "30")
+            ini.AddSetting("Settings", "DTP Delay", "5")
+            ini.AddSetting("Settings", "DTP Cooldown", "30")
             ini.AddSetting("VTP", "Small Rad", "6050, 381, -3620")
             ini.AddSetting("VTP", "Big Rad", "5250, 371, -4850")
             ini.AddSetting("VTP", "Factory Rad", "6300, 361, -4650")
@@ -139,15 +133,17 @@ class DonatorRank:
             ini.AddSetting("DTP", "French Valley", "6056, 385, -4162")
             ini.AddSetting("DTP", "North Next Valley", "4668, 445, -3908")
             ini.Save()
-        self.__PLAYER__ = None
-        self.__LOCATION__ = None
-        self.__LOCNAME__ = None
+        users = self.getUserIni()
+        if not len(users.Sections) == 0:
+            for steamidKey in users.Sections:
+                users.DeleteSetting(steamidKey, "CanKick")
+                users.DeleteSetting(steamidKey, "CanBan")
         DataStore.Flush("DonatorRank")
-        DataStore.Flush("ModBan")
-        self.killtimer()
         tp = Plugin.GetIni("TPLocations")
-        DataStore.Add("DonatorRank", "VTPDELAY", int(tp.GetSetting("Settings", "VTP TPDelay")))
-        DataStore.Add("DonatorRank", "DTPDELAY", int(tp.GetSetting("Settings", "DTP TPDelay")))
+        DataStore.Add("DonatorRank", "VTPDELAY", int(tp.GetSetting("Settings", "VTP Delay")) * 1000)
+        DataStore.Add("DonatorRank", "VTPCoolDown", int(tp.GetSetting("Settings", "VTP Cooldown")) * 1000)
+        DataStore.Add("DonatorRank", "DTPDELAY", int(tp.GetSetting("Settings", "DTP Delay")) * 1000)
+        DataStore.Add("DonatorRank", "DTPCoolDown", int(tp.GetSetting("Settings", "DTP Cooldown")) * 1000)
         count = 1
         for key in tp.EnumSection("VTP"):
             DataStore.Add("DonatorRank", "VTP" + str(count), key)
@@ -215,12 +211,10 @@ class DonatorRank:
         DataStore.Add("DonatorRank", "ModHomesMax", ini.GetSetting("ModSettings", "Maxhomes"))
         DataStore.Add("DonatorRank", "DonatorHomesMax", ini.GetSetting("DonatorSettings", "Maxhomes"))
         DataStore.Add("DonatorRank", "VIPHomesMax", ini.GetSetting("VIPSettings", "Maxhomes"))
-        DataStore.Add("DonatorRank", "DTPCoolDown", ini.GetSetting("DonatorSettings", "TPCooldown"))
-        DataStore.Add("DonatorRank", "VTPCoolDown", ini.GetSetting("VIPSettings", "TPCooldown"))
-        DataStore.Add("DonatorRank", "LVL1DKITCoolDown", ini.GetSetting("DonatorSettings", "LVL1KitCooldown"))
-        DataStore.Add("DonatorRank", "LVL1VKITCoolDown", ini.GetSetting("VIPSettings", "LVL1KitCooldown"))
-        DataStore.Add("DonatorRank", "LVL2DKITCoolDown", ini.GetSetting("DonatorSettings", "LVL2KitCooldown"))
-        DataStore.Add("DonatorRank", "LVL2VKITCoolDown", ini.GetSetting("VIPSettings", "LVL2KitCooldown"))
+        DataStore.Add("DonatorRank", "LVL1DKITCoolDown", int(ini.GetSetting("DonatorSettings", "LVL1KitCooldown")) * 1000)
+        DataStore.Add("DonatorRank", "LVL1VKITCoolDown", int(ini.GetSetting("VIPSettings", "LVL1KitCooldown")) * 1000)
+        DataStore.Add("DonatorRank", "LVL2DKITCoolDown", int(ini.GetSetting("DonatorSettings", "LVL2KitCooldown")) * 1000)
+        DataStore.Add("DonatorRank", "LVL2VKITCoolDown", int(ini.GetSetting("VIPSettings", "LVL2KitCooldown")) * 1000)
  
     def On_Command(self, Player, cmd, args):
         if cmd == "donatorhelp":
@@ -229,34 +223,27 @@ class DonatorRank:
                 rank = users.GetSetting(Player.SteamID, "Rank")
                 if Player.Admin or rank == "VIP" or rank == "Donator" or rank == "Mod":
                     if users.GetSetting(Player.SteamID, "AddVIPS") == "true" or Player.Admin:
-                        Player.Message("/vadd [playername] - Add player as Vip")
+                        Player.Message("/vadd [playername] - Add a player as Vip")
                     if users.GetSetting(Player.SteamID, "AddDonators") == "true" or Player.Admin:
-                        Player.Message("/dadd [playername] - Add player as Donator")
+                        Player.Message("/dadd [playername] - Add a player as Donator")
                     if users.GetSetting(Player.SteamID, "AddMods") == "true" or Player.Admin:
-                        Player.Message("/madd [playername] - Add player as Mod")
+                        Player.Message("/madd [playername] - Add a player as Mod")
                     if users.GetSetting(Player.SteamID, "DelVIPS") == "true" or Player.Admin:
-                        Player.Message("/vdel [playername] - Remove player as Vip")
+                        Player.Message("/vdel [playername] - Remove a player as Vip")
                     if users.GetSetting(Player.SteamID, "DelDonators") == "true" or Player.Admin:
-                        Player.Message("/ddel [playername] - Remove player as Donator")
+                        Player.Message("/ddel [playername] - Remove a player as Donator")
                     if users.GetSetting(Player.SteamID, "DelMods") == "true" or Player.Admin:
-                        Player.Message("/mdel [playername] - Remove player as Mod")
+                        Player.Message("/mdel [playername] - Remove a player as Mod")
                     if users.GetSetting(Player.SteamID, "LVL1VKIT") == "true" or Player.Admin:
                         Player.Message("/vkit basic - Get the basic VIP kit")
                     if users.GetSetting(Player.SteamID, "LVL2VKIT") == "true" or Player.Admin:
-                        Player.Message("/vkit advanced - Get the basic VIP kit")
+                        Player.Message("/vkit advanced - Get the advanced VIP kit")
                     if users.GetSetting(Player.SteamID, "LVL1DKIT") == "true" or Player.Admin:
                         Player.Message("/dkit basic - Get the basic Donator kit")
                     if users.GetSetting(Player.SteamID, "LVL2DKIT") == "true" or Player.Admin:
-                        Player.Message("/dkit advanced - Get the basic Donator kit")
+                        Player.Message("/dkit advanced - Get the advanced Donator kit")
                     if users.GetSetting(Player.SteamID, "MODKIT") == "true" or Player.Admin:
                         Player.Message("/mkit - Gives you invisible suit + uber items")
-                    if users.GetSetting(Player.SteamID, "CanKick") == "true" or Player.Admin:
-                        Player.Message("/mkick [Name] - Kicks a player")
-                    if users.GetSetting(Player.SteamID, "CanBan") == "true" or Player.Admin:
-                        Player.Message("/mban - Shoot a player to ban them")
-                        Player.Message("/mban [Name] - To ban a player by their name instead of shooting")
-                        Player.Message("/cban - To cancel shooting a player to ban")
-                        Player.Message("/munban [SteamID] - Unbans a steamID")
                     if users.GetSetting(Player.SteamID, "VTP") == "true" or Player.Admin:
                         Player.Message("/vtp - Teleport to preset locations")
                     if users.GetSetting(Player.SteamID, "DTP") == "true" or Player.Admin:
@@ -323,8 +310,6 @@ class DonatorRank:
                             users.AddSetting(vipname.SteamID, "LVL1DKIT", "false")
                             users.AddSetting(vipname.SteamID, "LVL2DKIT", "false")
                             users.AddSetting(vipname.SteamID, "MODKIT", "false")
-                            users.AddSetting(vipname.SteamID, "CanKick", "false")
-                            users.AddSetting(vipname.SteamID, "CanBan", "false")
                             users.AddSetting(vipname.SteamID, "VTP", "true")
                             users.AddSetting(vipname.SteamID, "DTP", "false")
                             users.AddSetting(vipname.SteamID, "MTP", "false")
@@ -370,8 +355,6 @@ class DonatorRank:
                             users.AddSetting(donname.SteamID, "LVL1DKIT", "true")
                             users.AddSetting(donname.SteamID, "LVL2DKIT", "false")
                             users.AddSetting(donname.SteamID, "MODKIT", "false")
-                            users.AddSetting(donname.SteamID, "CanKick", "false")
-                            users.AddSetting(donname.SteamID, "CanBan", "false")
                             users.AddSetting(donname.SteamID, "VTP", "false")
                             users.AddSetting(donname.SteamID, "DTP", "true")
                             users.AddSetting(donname.SteamID, "MTP", "false")
@@ -416,8 +399,6 @@ class DonatorRank:
                             users.AddSetting(modname.SteamID, "LVL1DKIT", "false")
                             users.AddSetting(modname.SteamID, "LVL2DKIT", "false")
                             users.AddSetting(modname.SteamID, "MODKIT", "true")
-                            users.AddSetting(modname.SteamID, "CanKick", "true")
-                            users.AddSetting(modname.SteamID, "CanBan", "true")
                             users.AddSetting(modname.SteamID, "VTP", "false")
                             users.AddSetting(modname.SteamID, "DTP", "false")
                             users.AddSetting(modname.SteamID, "MTP", "true")
@@ -466,8 +447,6 @@ class DonatorRank:
                             users.DeleteSetting(vipname.SteamID, "LVL1DKIT")
                             users.DeleteSetting(vipname.SteamID, "LVL2DKIT")
                             users.DeleteSetting(vipname.SteamID, "MODKIT")
-                            users.DeleteSetting(vipname.SteamID, "CanKick")
-                            users.DeleteSetting(vipname.SteamID, "CanBan")
                             users.DeleteSetting(vipname.SteamID, "VTP")
                             users.DeleteSetting(vipname.SteamID, "DTP")
                             users.DeleteSetting(vipname.SteamID, "MTP")
@@ -507,8 +486,6 @@ class DonatorRank:
                             users.DeleteSetting(donname.SteamID, "LVL1DKIT")
                             users.DeleteSetting(donname.SteamID, "LVL2DKIT")
                             users.DeleteSetting(donname.SteamID, "MODKIT")
-                            users.DeleteSetting(donname.SteamID, "CanKick")
-                            users.DeleteSetting(donname.SteamID, "CanBan")
                             users.DeleteSetting(donname.SteamID, "VTP")
                             users.DeleteSetting(donname.SteamID, "DTP")
                             users.DeleteSetting(donname.SteamID, "MTP")
@@ -548,8 +525,6 @@ class DonatorRank:
                             users.DeleteSetting(modname.SteamID, "LVL1DKIT")
                             users.DeleteSetting(modname.SteamID, "LVL2DKIT")
                             users.DeleteSetting(modname.SteamID, "MODKIT")
-                            users.DeleteSetting(modname.SteamID, "CanKick")
-                            users.DeleteSetting(modname.SteamID, "CanBan")
                             users.DeleteSetting(modname.SteamID, "VTP")
                             users.DeleteSetting(modname.SteamID, "DTP")
                             users.DeleteSetting(modname.SteamID, "MTP")
@@ -572,11 +547,11 @@ class DonatorRank:
                             Player.Message("You need atleast 10 free spaces!")
                         else:
                             sett = self.GetSettingsIni()
-                            waittime = int(sett.GetSetting("VIPSettings", "LVL1KitCooldown"))
+                            waittime = DataStore.Get("DonatorRank", "LVL1VKITCoolDown")
                             if DataStore.Get("LVL1VKitCooldown", Player.SteamID) is None:
                                 time = 0
                             else:
-                                time = DataStore.Get("LVL2DKitCooldown", Player.SteamID)
+                                time = DataStore.Get("LVL1VKitCooldown", Player.SteamID)
                                 time = int(time)
                             calc = System.Environment.TickCount - time
                             if calc >= waittime or Player.Admin:
@@ -587,12 +562,10 @@ class DonatorRank:
                                     if key == "VKIT1_INV" + str(count):
                                         Player.Inventory.AddItem(DataStore.Get("DonatorRank", "VKIT1_INV" + str(count)), int(DataStore.Get("DonatorRank", "VKIT1_QTY" + str(count))))
                                         count += 1
-                                Player.Message(str(count))
-                                Player.Notice("Here is your kit")
+                                Player.Notice("You have redeemed kit: VIPKit Basic")
                             else:
-                                workingout = (round(waittime / 1000, 2) / 60) - round(int(calc) / 1000, 2) / 60
-                                current = round(workingout, 2)
-                                Player.Message(str(current) + " Minutes remaining before you can use this.")
+                                workingout = round((waittime / 1000) - float(calc / 1000), 3)
+                                Player.Message(str(workingout) + " seconds remaining before you can use this.")
                     else:
                         Player.Message("You don't have permission to use this command!")
                 elif args[0] == "advanced":
@@ -602,11 +575,11 @@ class DonatorRank:
                             Player.Message("You need atleast 10 free spaces!")
                         else:
                             sett = self.GetSettingsIni()
-                            waittime = int(sett.GetSetting("VIPSettings", "LVL2KitCooldown"))
+                            waittime = DataStore.Get("DonatorRank", "LVL2VKITCoolDown")
                             if DataStore.Get("LVL2VKitCooldown", Player.SteamID) is None:
                                 time = 0
                             else:
-                                time = DataStore.Get("LVL2DKitCooldown", Player.SteamID)
+                                time = DataStore.Get("LVL2VKitCooldown", Player.SteamID)
                                 time = int(time)
                             calc = System.Environment.TickCount - time
                             if calc >= waittime or Player.Admin or time == 0:
@@ -619,11 +592,10 @@ class DonatorRank:
                                         count += 1
                                     else:
                                         continue
-                                Player.Notice("Here is your kit")
+                                Player.Notice("You have redeemed kit: VIPKit Advanced")
                             else:
-                                workingout = (round(waittime / 1000, 2) / 60) - round(int(calc) / 1000, 2) / 60
-                                current = round(workingout, 2)
-                                Player.Message(str(current) + " Minutes remaining before you can use this.")
+                                workingout = round((waittime / 1000) - float(calc / 1000), 3)
+                                Player.Message(str(workingout) + " seconds remaining before you can use this.")
                     else:
                         Player.Message("You don't have permission to use this command!")
  
@@ -638,11 +610,11 @@ class DonatorRank:
                             Player.Message("You need atleast 10 free spaces!")
                         else:
                             sett = self.GetSettingsIni()
-                            waittime = int(sett.GetSetting("DonatorSettings", "LVL1KitCooldown"))
+                            waittime = DataStore.Get("DonatorRank", "LVL1DKITCoolDown")
                             if DataStore.Get("LVL1DKitCooldown", Player.SteamID) is None:
                                 time = 0
                             else:
-                                time = DataStore.Get("LVL2DKitCooldown", Player.SteamID)
+                                time = DataStore.Get("LVL1DKitCooldown", Player.SteamID)
                                 time = int(time)
                             calc = System.Environment.TickCount - int(time)
                             if calc >= waittime or Player.Admin or time == 0:
@@ -655,11 +627,10 @@ class DonatorRank:
                                         count += 1
                                     else:
                                         continue
-                                Player.Notice("Here is your kit")
+                                Player.Notice("You have redeemed kit: DonatorKit Basic")
                             else:
-                                workingout = (round(waittime / 1000, 2) / 60) - round(int(calc) / 1000, 2) / 60
-                                current = round(workingout, 2)
-                                Player.Message(str(current) + " Minutes remaining before you can use this.")
+                                workingout = round((waittime / 1000) - float(calc / 1000), 3)
+                                Player.Message(str(workingout) + " seconds remaining before you can use this.")
                     else:
                         Player.Message("You don't have permission to use this command!")
                 elif args[0] == "advanced":
@@ -669,7 +640,7 @@ class DonatorRank:
                             Player.Message("You need atleast 10 free spaces!")
                         else:
                             sett = self.GetSettingsIni()
-                            waittime = int(sett.GetSetting("DonatorSettings", "LVL2KitCooldown"))
+                            waittime = DataStore.Get("DonatorRank", "LVL2DKITCoolDown")
                             if DataStore.Get("LVL2DKitCooldown", Player.SteamID) is None:
                                 time = 0
                             else:
@@ -686,11 +657,10 @@ class DonatorRank:
                                         count += 1
                                     else:
                                         continue
-                                Player.Notice("Here is your kit")
+                                Player.Notice("You have redeemed kit: DonatorKit Advanced")
                             else:
-                                workingout = (round(waittime / 1000, 2) / 60) - round(int(calc) / 1000, 2) / 60
-                                current = round(workingout, 2)
-                                Player.Message(str(current) + " Minutes remaining before you can use this.")
+                                workingout = round((waittime / 1000) - float(calc / 1000), 3)
+                                Player.Message(str(workingout) + " seconds remaining before you can use this.")
                     else:
                         Player.Message("You don't have permission to use this command!")
  
@@ -731,7 +701,7 @@ class DonatorRank:
                             Player.Message(str(count) + ") - " + DataStore.Get("DonatorRank", key))
                             count += 1
                 elif len(args) == 1:
-                    waittime = int(DataStore.Get("DonatorRank", "VTPCoolDown"))
+                    waittime = DataStore.Get("DonatorRank", "VTPCoolDown")
                     time = DataStore.Get("VTPCooldown", Player.SteamID)
                     time = int(time)
                     if time is None:
@@ -739,20 +709,19 @@ class DonatorRank:
                     calc = System.Environment.TickCount - time
                     if DataStore.Get("DonatorRank", "VTP" + args[0]) is not None:
                         if calc >= waittime or Player.Admin:
-                            if self.__PLAYER__ is None:
-                                delay = DataStore.Get("DonatorRank", "VTPDELAY")
-                                Player.Message("Teleporting in " + str(delay) + " seconds.")
-                                self.__LOCNAME__ = DataStore.Get("DonatorRank", "VTP" + args[0])
-                                self.__LOCATION__ = DataStore.Get("DonatorRank", self.__LOCNAME__).split(",")
-                                self.__PLAYER__ = Player
-                                DataStore.Add("VTPCooldown", Player.SteamID, System.Environment.TickCount)
-                                Plugin.CreateTimer("tpdelay", delay * 1000).Start()
-                            else:
-                                Player.Message(self.__PLAYER__.Name + " is using this command, Wait a few seconds")
+                            delay = DataStore.Get("DonatorRank", "VTPDELAY")
+                            locname = DataStore.Get("DonatorRank", "VTP" + args[0])
+                            Data = Plugin.CreateDict()
+                            Data["Player"] = Player
+                            Data["LocationName"] = locname
+                            Data["Location"] = DataStore.Get("DonatorRank", locname).split(",")
+                            Data["Health"] = Player.Health
+                            Data["Type"] = "VTPCooldown"
+                            Plugin.CreateParallelTimer("TeleportDelay", int(delay), Data).Start()
+                            Player.Message("Teleporting in " + str(delay / 1000) + " seconds.")
                         else:
-                            workingout = (round(waittime / 1000, 2) / 60) - round(int(calc) / 1000, 2) / 60
-                            current = round(workingout, 2)
-                            Player.Message(str(current) + " Minutes remaining before you can use this.")
+                            workingout = round((waittime / 1000) - float(calc / 1000), 3)
+                            Player.Message(str(workingout) + " seconds remaining before you can use this.")
                     else:
                         Player.Message("Usage: /vtp [Number]")
                 else:
@@ -772,7 +741,7 @@ class DonatorRank:
                             Player.Message(str(count) + ") - " + DataStore.Get("DonatorRank", key))
                             count += 1
                 elif len(args) == 1:
-                    waittime = int(DataStore.Get("DonatorRank", "DTPCoolDown"))
+                    waittime = DataStore.Get("DonatorRank", "DTPCoolDown")
                     time = DataStore.Get("DTPCooldown", Player.SteamID)
                     time = int(time)
                     if time is None:
@@ -780,20 +749,19 @@ class DonatorRank:
                     calc = System.Environment.TickCount - time
                     if DataStore.Get("DonatorRank", "DTP" + args[0]) is not None:
                         if calc >= waittime or Player.Admin:
-                            if self.__PLAYER__ is None:
-                                delay = DataStore.Get("DonatorRank", "DTPDELAY")
-                                Player.Message("Teleporting in " + str(delay) + " seconds.")
-                                self.__LOCNAME__ = DataStore.Get("DonatorRank", "DTP" + args[0])
-                                self.__LOCATION__ = DataStore.Get("DonatorRank", self.__LOCNAME__).split(",")
-                                self.__PLAYER__ = Player
-                                DataStore.Add("DTPCooldown", Player.SteamID, System.Environment.TickCount)
-                                Plugin.CreateTimer("tpdelay", delay * 1000).Start()
-                            else:
-                                Player.Message(self.__PLAYER__.Name + " is using this command, Wait a few seconds")
+                            delay = DataStore.Get("DonatorRank", "DTPDELAY")
+                            locname = DataStore.Get("DonatorRank", "DTP" + args[0])
+                            Data = Plugin.CreateDict()
+                            Data["Player"] = Player
+                            Data["LocationName"] = locname
+                            Data["Location"] = DataStore.Get("DonatorRank", locname).split(",")
+                            Data["Health"] = Player.Health
+                            Data["Type"] = "DTPCooldown"
+                            Plugin.CreateParallelTimer("TeleportDelay", int(delay), Data).Start()
+                            Player.Message("Teleporting to " + locname + " in " + str(delay / 1000) + " seconds.")
                         else:
-                            workingout = (round(waittime / 1000, 2) / 60) - round(int(calc) / 1000, 2) / 60
-                            current = round(workingout, 2)
-                            Player.Message(str(current) + " Minutes remaining before you can use this.")
+                            workingout = round((waittime / 1000) - float(calc / 1000), 3)
+                            Player.Message(str(workingout) + " seconds remaining before you can use this.")
                     else:
                         Player.Message("Usage: /dtp [Number]")
                 else:
@@ -834,84 +802,11 @@ class DonatorRank:
             if users.GetSetting(Player.SteamID, "MTP") == "true" or Player.Admin:
                 if DataStore.Get("MODLOCATION", Player.SteamID):
                     plocation = DataStore.Get("MODLOCATION", Player.SteamID)
-                    Player.SafeTeleportTo(plocation)
+                    Player.TeleportTo(plocation)
                     Player.Message("You have been teleported back")
                     DataStore.Remove("MODLOCATION", Player.SteamID)
-                    Player.SafeTeleportTo(plocation)
                 else:
                     Player.Message("You have no last locations")
-            else:
-                Player.Message("You don't have permission to use this command!")
- 
-        elif cmd == "mban":
-            users = self.getUserIni()
-            if users.GetSetting(Player.SteamID, "CanBan") == "true" or Player.Admin:
-                if len(args) > 0:
-                    targetname = self.CheckV(Player, args)
-                    if targetname is not None:
-                        ini = self.BansListIni()
-                        ini.AddSetting("BannedIDs", targetname.SteamID, targetname.Name + " was banned by: " + Player.Name)
-                        ini.Save()
-                        Server.Broadcast("[color red]" + targetname.Name + "[/color] has been banned by: [color red]" + Player.Name)
-                        if DataStore.Get("ModBan", Player.SteamID) == "on":
-                            DataStore.Remove("ModBan", Player.SteamID)
-                            Player.Message("You can now safely shoot another player")
-                        targetname.Disconnect()
-                    else:
-                        return
-                else:
-                    DataStore.Add("ModBan", Player.SteamID, "on")
-                    Player.Message("Shoot the player to ban them")
-                    Player.Message("Or you can type /mban [username]")
-                    Player.Message("Type /cban to cancel this action")
-            else:
-                Player.Message("You don't have permission to use this command!")
-
-        elif cmd == "munban":
-            users = self.getUserIni()
-            if users.GetSetting(Player.SteamID, "CanBan") == "true" or Player.Admin:
-                if len(args) > 0:
-                    ini = self.BansListIni()
-                    if ini.GetSetting("BannedIDs", args[0]) is not None:
-                        ini.DeleteSetting("BannedIDs", args[0])
-                        ini.Save()
-                        Player.Message("[color red]" + args[0] + "[/color] has been unbanned, They can now connect!")
-                    else:
-                        Player.Message("Can not find the ID: " + args[0])
-                else:
-                    Player.Message("Usage: /munban [SteamID]")
-            else:
-                Player.Message("You don't have permission to use this command!")
-
-        elif cmd == "cban":
-            users = self.getUserIni()
-            if users.GetSetting(Player.SteamID, "CanBan") == "true" or Player.Admin:
-                if DataStore.Get("ModBan", Player.SteamID) == "on":
-                    DataStore.Remove("ModBan", Player.SteamID)
-                    Player.Message("You can now shoot a player safely")
-                else:
-                    Player.Message("You never had this command enabled")
-            else:
-                Player.Message("You don't have permission to use this command!")
- 
-        elif cmd == "mkick":
-            users = self.getUserIni()
-            if users.GetSetting(Player.SteamID, "CanKick") == "true" or Player.Admin:
-                if len(args) > 0:
-                    targetname = self.CheckV(Player, args)
-                    if targetname is not None:
-                        pn = targetname.Name
-                        targetname.Message("You have been kicked by: " + Player.Name)
-                        Server.Broadcast("[color red]" + pn + " [/color]has been kicked by: [color red]" + Player.Name)
-                        if DataStore.Get("DonatorRank", "LogKicks") == "true":
-                            ini = self.getLogIni()
-                            ini.AddSetting("KickedList", Plugin.GetDate() + "| " + Plugin.GetTime() + " || " + Player.Name + " kicked: " + targetname.Name, targetname.SteamID)
-                            ini.Save()
-                        targetname.Disconnect()
-                    else:
-                        return
-                else:
-                    Player.Message("usage: /mkick [name]")
             else:
                 Player.Message("You don't have permission to use this command!")
  
@@ -919,18 +814,18 @@ class DonatorRank:
             users = self.getUserIni()
             if users.GetSetting(Player.SteamID, "AccessInfo") == "true" or Player.Admin:
                 if len(args) > 0:
-                    targetname = self.CheckV(Player, args)
-                    if targetname is not None:
-                        pip = targetname.IP
-                        plocation = str(targetname.Location)
-                        pping = str(targetname.Ping)
-                        pid = targetname.SteamID
-                        pn = targetname.Name
-                        Player.Message("Info about " + pn)
-                        Player.Message("IP: [color cyan]" + pip)
-                        Player.Message("SteamID: [color cyan]" + pid)
-                        Player.Message("Current Location: [color cyan]" + plocation)
-                        Player.Message("Ping: [color cyan]" + pping)
+                    target = self.CheckV(Player, args)
+                    if target is not None:
+                        Player.Message("Info about [color cyan]" + target.Name)
+                        Player.Message("IP: [color cyan]" + target.IP)
+                        Player.Message("SteamID: [color cyan]" + target.SteamID)
+                        Player.Message("Ping: [color cyan]" + str(target.Ping))
+                        Player.Message("Health: [color cyan]" + str(target.Health))
+                        Player.Message("Time Online: [color cyan]" + str(target.TimeOnline)[:-3] + "[color white] seconds")
+                        if target.AtHome:
+                            Player.Message("Is at home: [color cyan]True")
+                        else:
+                            Player.Message("Is at home: [color cyan]False")
                     else:
                         return
                 else:
@@ -938,45 +833,27 @@ class DonatorRank:
             else:
                 Player.Message("You don't have permission to use this command!")
 
-    def killtimer(self):
-        timer = Plugin.GetTimer("tpdelay")
-        if timer is None:
-            return
-        timer.Stop()
-        Plugin.Timers.Remove("tpdelay")
-
-    def tpdelayCallback(self):
-        self.killtimer()
-        Player = self.__PLAYER__
-        location = self.__LOCATION__
-        name = self.__LOCNAME__
-        Player.SafeTeleportTo(float(location[0]), float(location[1]), float(location[2]))
-        Player.InventoryNotice(name)
-        self.__PLAYER__ = None
-        self.__LOCATION__ = None
-        self.__LOCNAME__ = None
+    def TeleportDelayCallback(self, timer):
+        timer.Kill()
+        Data = timer.Args
+        Player = Data["Player"]
+        if Data["Health"] <= Player.Health:
+            locname = Data["LocationName"]
+            loc = Data["Location"]
+            Player.TeleportTo(float(loc[0]), float(loc[1]), float(loc[2]))
+            Player.InventoryNotice(locname)
+            DataStore.Add(Data["Type"], Player.SteamID, System.Environment.TickCount)
+        else:
+            Player.Message("You have been hurt, Canceled teleport!")
+            
 
     def On_PlayerConnected(self, Player):
         try:
-            if self.isBanned(Player):
-                Player.Message("[color red]You are banned!")
-                Player.Message("[color red]You are banned!")
-                Player.Message("[color red]You are banned!")
-                Player.Disconnect()
             ini = self.getUserIni()
             if ini.GetSetting(Player.SteamID, "MaxHomes") is not None:
                 DataStore.Add("MaxHomes", Player.SteamID, int(ini.GetSetting(Player.SteamID, "MaxHomes")))
-            DataStore.Add("MTPCooldown", Player.SteamID, System.Environment.TickCount)
-            DataStore.Add("VTPCooldown", Player.SteamID, System.Environment.TickCount)
-            DataStore.Add("DTPCooldown", Player.SteamID, System.Environment.TickCount)
-            DataStore.Add("LVL1DKitCooldown", Player.SteamID, System.Environment.TickCount)
-            DataStore.Add("LVL2DKitCooldown", Player.SteamID, System.Environment.TickCount)
-            DataStore.Add("LVL1VKitCooldown", Player.SteamID, System.Environment.TickCount)
-            DataStore.Add("LVL2VKitCooldown", Player.SteamID, System.Environment.TickCount)
             if DataStore.Get("DonatorRank", "JoinMMSG") == "true":
-                if self.isBanned(Player):
-                    return
-                elif Player.SteamID == DataStore.Get("DonatorRank", "OwnerID"):
+                if Player.SteamID == DataStore.Get("DonatorRank", "OwnerID"):
                     Server.BroadcastFrom("Owner", Player.Name + " is now Online.")
                 elif Player.Admin:
                     Server.BroadcastFrom("Admin", Player.Name + " is now Online.")
@@ -994,14 +871,6 @@ class DonatorRank:
     def On_PlayerDisconnected(self, Player):
         try:
             DataStore.Remove("MaxHomes", Player.SteamID)
-            DataStore.Remove("MTPCooldown", Player.SteamID)
-            DataStore.Remove("VKitCooldown", Player.SteamID)
-            DataStore.Remove("LVL1DKitCooldown", Player.SteamID)
-            DataStore.Remove("LVL2DKitCooldown", Player.SteamID)
-            DataStore.Remove("LVL1VKitCooldown", Player.SteamID)
-            DataStore.Remove("LVL2VKitCooldown", Player.SteamID)
-            DataStore.Remove("DTPCooldown", Player.SteamID)
-            DataStore.Remove("ModBan", Player.SteamID)
             DataStore.Remove("MODLOCATION", Player.SteamID)
             if DataStore.Get("DonatorRank", "LeaveMSG") == "true":
                 if Player.SteamID == DataStore.Get("DonatorRank", "OwnerID"):
@@ -1077,8 +946,6 @@ class DonatorRank:
                 ini.AddSetting(modname.SteamID, "LVL1DKIT", "false")
                 ini.AddSetting(modname.SteamID, "LVL2DKIT", "false")
                 ini.AddSetting(modname.SteamID, "MODKIT", "true")
-                ini.AddSetting(modname.SteamID, "CanKick", "true")
-                ini.AddSetting(modname.SteamID, "CanBan", "true")
                 ini.AddSetting(modname.SteamID, "VTP", "false")
                 ini.AddSetting(modname.SteamID, "DTP", "false")
                 ini.AddSetting(modname.SteamID, "MTP", "true")
@@ -1111,16 +978,6 @@ class DonatorRank:
         except:
             pass
  
-    def isBanned(self, Player):
-        try:
-            ini = self.BansListIni()
-            if ini.GetSetting("BannedIDs", Player.SteamID) is not None:
-                return True
-            else:
-                return None
-        except:
-            pass
- 
     def GetSettingsIni(self):
         if not Plugin.IniExists("Settings"):
             ini = Plugin.CreateIni("Settings")
@@ -1138,29 +995,6 @@ class DonatorRank:
             ini = Plugin.CreateIni("Logs")
             ini.Save()
         return Plugin.GetIni("Logs")
- 
-    def BansListIni(self):
-        if not Plugin.IniExists("BansList"):
-            ini = Plugin.CreateIni("BansList")
-            ini.Save()
-        return Plugin.GetIni("BansList")
- 
-    def On_PlayerHurt(self, hit):
-        try:
-            if self.TrytoGrabID(hit.Attacker) is None:
-                return
-            elif DataStore.Get("ModBan", hit.Attacker.SteamID) == "on":
-                ini = self.BansListIni()
-                hit.DamageAmount = 0
-                ini.AddSetting("BannedIDs", hit.Victim.SteamID, hit.Victim.Name + " was banned by: " + hit.Attacker.Name)
-                ini.Save()
-                Server.Broadcast("[color red]" + hit.Victim.Name + "[/color] has been banned by: [color red]" + hit.Attacker.Name)
-                hit.Victim.Disconnect()
-                DataStore.Remove("ModBan", hit.Attacker.SteamID)
-                hit.Attacker.Message("You can now safely shoot another player")
-        except:
-            pass
-
  
     def argsToText(self, args):
         text = str.join(" ", args)
