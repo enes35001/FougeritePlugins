@@ -1,6 +1,6 @@
 __title__ = 'GatherPlus'
 __author__ = 'Jakkee'
-__version__ = '4.1.6'
+__version__ = '4.2'
 
 import clr
 clr.AddReferenceByPartialName("Fougerite")
@@ -13,32 +13,51 @@ class GatherPlus:
         if not Plugin.IniExists("Settings"):
             Plugin.CreateIni("Settings")
             ini = Plugin.GetIni("Settings")
-            ini.AddSetting("Config", "Wood", "2")
-            ini.AddSetting("Config", "Sulfur Ore", "2")
-            ini.AddSetting("Config", "Metal Ore", "2")
-            ini.AddSetting("Config", "Stones", "2")
-            ini.AddSetting("Config", "Leather", "2")
-            ini.AddSetting("Config", "Cloth", "2")
-            ini.AddSetting("Config", "RawChickenBreast", "2")
-            ini.AddSetting("Config", "AnimalFat", "2")
-            ini.AddSetting("Config", "Blood", "2")
+            ini.AddSetting("GatherRate", "Wood", "2")
+            ini.AddSetting("GatherRate", "Sulfur Ore", "2")
+            ini.AddSetting("GatherRate", "Metal Ore", "2")
+            ini.AddSetting("GatherRate", "Stones", "2")
+            ini.AddSetting("GatherRate", "Leather", "2")
+            ini.AddSetting("GatherRate", "Cloth", "2")
+            ini.AddSetting("GatherRate", "RawChickenBreast", "2")
+            ini.AddSetting("GatherRate", "AnimalFat", "2")
+            ini.AddSetting("GatherRate", "Blood", "2")
+            ini.AddSetting("TotalResources", "MutantBear", "5")
+            ini.AddSetting("TotalResources", "MutantWolf", "3")
+            ini.AddSetting("TotalResources", "Bear", "5")
+            ini.AddSetting("TotalResources", "Wolf", "3")
+            ini.AddSetting("TotalResources", "Chicken", "2")
+            ini.AddSetting("TotalResources", "Rabbit", "2")
+            ini.AddSetting("TotalResources", "Boar", "4")
+            ini.AddSetting("TotalResources", "Stag", "5")
+            ini.AddSetting("TotalResources", "WoodPile", "100")
+            ini.AddSetting("TotalResources", "SulfurOre", "20")
+            ini.AddSetting("TotalResources", "MetalOre", "20")
+            ini.AddSetting("TotalResources", "StoneOre", "20")
             ini.Save()
         DataStore.Flush("GatherRate")
         ini = Plugin.GetIni("Settings")
-        DataStore.Add("GatherRate", "Wood", int(ini.GetSetting("Config", "Wood")))
-        DataStore.Add("GatherRate", "Sulfur", int(ini.GetSetting("Config", "Sulfur Ore")))
-        DataStore.Add("GatherRate", "Metal", int(ini.GetSetting("Config", "Metal Ore")))
-        DataStore.Add("GatherRate", "Stones", int(ini.GetSetting("Config", "Stones")))
-        DataStore.Add("GatherRate", "Leather", int(ini.GetSetting("Config", "Leather")))
-        DataStore.Add("GatherRate", "Cloth", int(ini.GetSetting("Config", "Cloth")))
-        DataStore.Add("GatherRate", "Chicken", int(ini.GetSetting("Config", "RawChickenBreast")))
-        DataStore.Add("GatherRate", "Fat", int(ini.GetSetting("Config", "AnimalFat")))
-        DataStore.Add("GatherRate", "Blood", int(ini.GetSetting("Config", "Blood")))
+        for key in ini.EnumSection("GatherRate"):
+            number = self.check(ini.GetSetting("GatherRate", key))
+            if number is not None:
+                DataStore.Add("GatherRate", key, number)
+                continue
+            else:
+                Util.Log("GatherPlus: ERROR setting GatherRate for: " + key + ". Setting is not a number!")
+                continue
+        for key in ini.EnumSection("TotalResources"):
+            number = self.check(ini.GetSetting("TotalResources", key))
+            if number is not None:
+                DataStore.Add("GatherRate", key, number)
+                continue
+            else:
+                Util.Log("GatherPlus: ERROR setting TotalResource for: " + key + ". Setting is not a number!")
+                continue
 
-    def check(self, arg):
+    def check(self, no):
         try:
-            i = int(arg)
-            return i
+            no = int(no)
+            return no
         except:
             return None
 
@@ -69,7 +88,7 @@ class GatherPlus:
                         ini.AddSetting("Config", "Sulfur Ore", str(name))
                         ini.Save()
                         DataStore.Remove("GatherRate", "Sulfur")
-                        DataStore.Add("GatherRate", "Sulfur", int(ini.GetSetting("Config", "Sulfur Ore")))
+                        DataStore.Add("GatherRate", "Sulfur Ore", int(ini.GetSetting("Config", "Sulfur Ore")))
                         Player.Message(str(name) + " is the new gather rate for Sulfur Ore!")
                     else:
                         Player.Message("usage: /sulfurrate [Number]")
@@ -85,8 +104,8 @@ class GatherPlus:
                         ini = Plugin.GetIni("Settings")
                         ini.AddSetting("Config", "Metal Ore", str(name))
                         ini.Save()
-                        DataStore.Remove("GatherRate", "Metal")
-                        DataStore.Add("GatherRate", "Metal", int(ini.GetSetting("Config", "Metal Ore")))
+                        DataStore.Remove("GatherRate", "Metal Ore")
+                        DataStore.Add("GatherRate", "Metal Ore", int(ini.GetSetting("Config", "Metal Ore")))
                         Player.Message(str(name) + " is the new gather rate for Metal Ore!")
                     else:
                         Player.Message("usage: /metalrate [Number]")
@@ -153,8 +172,8 @@ class GatherPlus:
                         ini = Plugin.GetIni("Settings")
                         ini.AddSetting("Config", "RawChickenBreast", str(name))
                         ini.Save()
-                        DataStore.Remove("GatherRate", "Chicken")
-                        DataStore.Add("GatherRate", "Chicken", int(ini.GetSetting("Config", "RawChickenBreast")))
+                        DataStore.Remove("GatherRate", "RawChickenBreast")
+                        DataStore.Add("GatherRate", "RawChickenBreast", int(ini.GetSetting("Config", "RawChickenBreast")))
                         Player.Message(str(name) + " is the new gather rate for Raw Chicken Breast!")
                     else:
                         Player.Message("usage: /chickenrate [Number]")
@@ -170,8 +189,8 @@ class GatherPlus:
                         ini = Plugin.GetIni("Settings")
                         ini.AddSetting("Config", "AnimalFat", str(name))
                         ini.Save()
-                        DataStore.Remove("GatherRate", "Fat")
-                        DataStore.Add("GatherRate", "Fat", int(ini.GetSetting("Config", "AnimalFat")))
+                        DataStore.Remove("GatherRate", "AnimalFat")
+                        DataStore.Add("GatherRate", "AnimalFat", int(ini.GetSetting("Config", "AnimalFat")))
                         Player.Message(str(name) + " is the new gather rate for Animal Fat!")
                     else:
                         Player.Message("usage: /fatrate [Number]")
@@ -210,6 +229,39 @@ class GatherPlus:
             else:
                 Player.MessageFrom("GatherPlus", "You're not allowed to use this command!")
 
+    def On_ResourceSpawn(self, ResourceTarget):
+        #Plugin.Log("startingTotals", str(ResourceTarget) + " = " + str(ResourceTarget.startingTotal))
+        try:
+            if str(ResourceTarget) == "MutantBear(Clone) (ResourceTarget)":
+                ResourceTarget.startingTotal = DataStore.Get("GatherRate", "MutantBear")
+            elif str(ResourceTarget) == "MutantWolf(Clone) (ResourceTarget)":
+                ResourceTarget.startingTotal = DataStore.Get("GatherRate", "MutantWolf")
+            elif str(ResourceTarget) == "Chicken_A(Clone) (ResourceTarget)":
+                ResourceTarget.startingTotal = DataStore.Get("GatherRate", "Chicken")
+            elif str(ResourceTarget) == "Rabbit_A(Clone) (ResourceTarget)":
+                ResourceTarget.startingTotal = DataStore.Get("GatherRate", "Rabbit")
+            elif str(ResourceTarget) == "Boar_A(Clone) (ResourceTarget)":
+                ResourceTarget.startingTotal = DataStore.Get("GatherRate", "Boar")
+            elif str(ResourceTarget) == "Stag_A(Clone) (ResourceTarget)":
+                ResourceTarget.startingTotal = DataStore.Get("GatherRate", "Stag")
+            elif str(ResourceTarget) == "Wolf(Clone) (ResourceTarget)":
+                ResourceTarget.startingTotal = DataStore.Get("GatherRate", "Wolf")
+            elif str(ResourceTarget) == "Bear(Clone) (ResourceTarget)":
+                ResourceTarget.startingTotal = DataStore.Get("GatherRate", "Bear")
+            elif str(ResourceTarget) == "WoodPile(Clone) (ResourceTarget)":
+                ResourceTarget.startingTotal = DataStore.Get("GatherRate", "WoodPile")
+            elif str(ResourceTarget) == "Ore1(Clone) (ResourceTarget)":
+                ResourceTarget.startingTotal = DataStore.Get("GatherRate", "SulfurOre")
+            elif str(ResourceTarget) == "Ore2(Clone) (ResourceTarget)":
+                ResourceTarget.startingTotal = DataStore.Get("GatherRate", "MetalOre")
+            elif str(ResourceTarget) == "Ore3(Clone) (ResourceTarget)":
+                ResourceTarget.startingTotal = DataStore.Get("GatherRate", "StoneOre")
+            else:
+                Util.Log("GatherPlus: Unknown ResourceTarget [" + str(ResourceTarget) + "]")
+                Util.Log("GatherPlus: Ignore this message if you have spawned in " + str(ResourceTarget) + " yourself!")
+        except:
+            Util.Log("GatherPlus: Error setting Total Resources, DataStore is possibly returning NoneType (Config error).")
+
     def On_PlayerGathering(self, Player, GatherEvent):
         if GatherEvent.Item == "Wood":
             if Player.Inventory.FreeSlots > 0:
@@ -222,7 +274,7 @@ class GatherPlus:
                 Player.Notice("Inventory full, can't gather")
         elif GatherEvent.Item == "Sulfur Ore":
             if Player.Inventory.FreeSlots > 0:
-                rate = DataStore.Get("GatherRate", "Sulfur")
+                rate = DataStore.Get("GatherRate", "Sulfur Ore")
                 gathered = GatherEvent.Quantity * (rate-1)
                 Player.Inventory.AddItem(GatherEvent.Item, gathered)
                 Player.InventoryNotice(str(gathered) + " x " + GatherEvent.Item)
@@ -231,7 +283,7 @@ class GatherPlus:
                 Player.Notice("Inventory full, can't gather")
         elif GatherEvent.Item == "Metal Ore":
             if Player.Inventory.FreeSlots > 0:
-                rate = DataStore.Get("GatherRate", "Metal")
+                rate = DataStore.Get("GatherRate", "Metal Ore")
                 gathered = GatherEvent.Quantity * (rate-1)
                 Player.Inventory.AddItem(GatherEvent.Item, gathered)
                 Player.InventoryNotice(str(gathered) + " x " + GatherEvent.Item)
@@ -267,7 +319,7 @@ class GatherPlus:
                 Player.Notice("Inventory full, can't gather")
         elif GatherEvent.Item == "Raw Chicken Breast":
             if Player.Inventory.FreeSlots > 0:
-                rate = DataStore.Get("GatherRate", "Chicken")
+                rate = DataStore.Get("GatherRate", "RawChickenBreast")
                 gathered = GatherEvent.Quantity * (rate-1)
                 Player.Inventory.AddItem(GatherEvent.Item, gathered)
                 Player.InventoryNotice(str(gathered) + " x " + GatherEvent.Item)
@@ -276,7 +328,7 @@ class GatherPlus:
                 Player.Notice("Inventory full, can't gather")
         elif GatherEvent.Item == "Animal Fat":
             if Player.Inventory.FreeSlots > 0:
-                rate = DataStore.Get("GatherRate", "Fat")
+                rate = DataStore.Get("GatherRate", "AnimalFat")
                 gathered = GatherEvent.Quantity * (rate-1)
                 Player.Inventory.AddItem(GatherEvent.Item, gathered)
                 Player.InventoryNotice(str(gathered) + " x " + GatherEvent.Item)
