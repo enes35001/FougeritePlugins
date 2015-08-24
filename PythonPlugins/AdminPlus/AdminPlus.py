@@ -1,6 +1,6 @@
 __title__ = 'AdminPlus'
 __author__ = 'Jakkee'
-__version__ = '1.8.2'
+__version__ = '1.8.3'
 
 import clr
 clr.AddReferenceByPartialName("Fougerite")
@@ -23,7 +23,7 @@ class AdminPlus:
         DataStore.Flush("AdminPlus")
         ini = Plugin.GetIni("Settings")
         DataStore.Add("AdminPlus", "DestroyEnabled", ini.GetSetting("Config", "AdminDestroyEnabled"))
-        DataStore.Add("AdminPlus", "Distance", ini.GetSetting("Config", "AdminTPDistance"))
+        DataStore.Add("AdminPlus", "Distance", float(ini.GetSetting("Config", "AdminTPDistance")))
         DataStore.Add("AdminPlus", "DestroyWeapon", ini.GetSetting("Config", "AdminDestroyWeapon"))
         DataStore.Add("AdminPlus", "ModeratorsCanUse", ini.GetSetting("Config", "ModeratorsCanUse"))
         DataStore.Add("AdminPlus", "DutyFirst", ini.GetSetting("Commands", "Player must run duty first?"))
@@ -70,7 +70,7 @@ class AdminPlus:
                             Player.Inventory.AddItemTo("Invisible Boots", 39, 1)
                             Player.MessageFrom("AdminPlus", "You're now Invisible!")
                         else:
-                            Player.MessageFrom("AdminPlus", "You are not on duty!")
+                            Player.MessageFrom("AdminPlus", "You're not on duty!")
                     elif args[0] == "off":
                         if self.dutyfirst(Player):
                             Player.Inventory.RemoveItem(36)
@@ -79,7 +79,7 @@ class AdminPlus:
                             Player.Inventory.RemoveItem(39)
                             Player.MessageFrom("AdminPlus", "You're now visible!")
                         else:
-                            Player.MessageFrom("AdminPlus", "You are not on duty!")
+                            Player.MessageFrom("AdminPlus", "You're not on duty!")
                     elif args[0] == "wood":
                         if self.dutyfirst(Player):
                             Player.Inventory.AddItem("Wood Pillar", 250)
@@ -94,7 +94,7 @@ class AdminPlus:
                             Player.Inventory.AddItem("Metal Window Bars", 15)
                             Player.MessageFrom("AdminPlus", "Wood building parts spawned!")
                         else:
-                            Player.MessageFrom("AdminPlus", "You are not on duty!")
+                            Player.MessageFrom("AdminPlus", "You're not on duty!")
                     elif args[0] == "weapons":
                         if self.dutyfirst(Player):
                             Player.Inventory.AddItem("Bolt Action Rifle", 1)
@@ -108,7 +108,7 @@ class AdminPlus:
                             Player.Inventory.AddItem("Shotgun Shells", 250)
                             Player.MessageFrom("AdminPlus", "Weapons plus Ammo spawned!")
                         else:
-                            Player.MessageFrom("AdminPlus", "You are not on duty!")
+                            Player.MessageFrom("AdminPlus", "You're not on duty!")
                     elif args[0] == "metal":
                         if self.dutyfirst(Player):
                             Player.Inventory.AddItem("Metal Pillar", 250)
@@ -123,7 +123,7 @@ class AdminPlus:
                             Player.Inventory.AddItem("Metal Window Bars", 15)
                             Player.MessageFrom("AdminPlus", "Metal building parts spawned!")
                         else:
-                            Player.MessageFrom("AdminPlus", "You are not on duty!")
+                            Player.MessageFrom("AdminPlus", "You're not on duty!")
                     elif args[0] == "uber":
                         if self.dutyfirst(Player):
                             Player.Inventory.AddItem("Uber Hatchet", 1)
@@ -131,7 +131,7 @@ class AdminPlus:
                             Player.Inventory.AddItem("Arrow", 40)
                             Player.MessageFrom("AdminPlus", "Uber items spawned!")
                         else:
-                            Player.MessageFrom("AdminPlus", "You are not on duty!")
+                            Player.MessageFrom("AdminPlus", "You're not on duty!")
                     elif args[0] == "kevlar":
                         if self.dutyfirst(Player):
                             Player.Inventory.RemoveItem(36)
@@ -144,18 +144,18 @@ class AdminPlus:
                             Player.Inventory.AddItemTo("Kevlar Boots", 39, 1)
                             Player.MessageFrom("AdminPlus", "I hope you have a legitimate reason why need this!")
                         else:
-                            Player.MessageFrom("AdminPlus", "You are not on duty!")
+                            Player.MessageFrom("AdminPlus", "You're not on duty!")
                     elif args[0] == "clear":
                         if self.dutyfirst(Player):
                             Player.Inventory.ClearAll()
                             Player.MessageFrom("AdminPlus", "Inventory cleared!")
                         else:
-                            Player.MessageFrom("AdminPlus", "You are not on duty!")
+                            Player.MessageFrom("AdminPlus", "You're not on duty!")
                     elif args[0] == "doors":
                         if self.dutyfirst(Player):
                             self.toggle(Player)
                         else:
-                            Player.MessageFrom("AdminPlus", "You are not on duty!")
+                            Player.MessageFrom("AdminPlus", "You're not on duty!")
                     else:
                         Player.MessageFrom("AdminPlus", "Unknown command")
                 else:
@@ -178,28 +178,29 @@ class AdminPlus:
                 else:
                     Player.MessageFrom("AdminPlus", "Usage: /duty [on/off]")
             else:
-                Player.MessageFrom("AdminPlus", "You are not allowed to use that command!")
+                Player.MessageFrom("AdminPlus", "You're not allowed to use that command!")
         elif cmd == "tpadmin":
             if Player.Admin or self.isMod(Player.SteamID):
                 if self.dutyfirst(Player):
                     if len(args) == 0:
                         Player.MessageFrom("AdminPlus", "Usage: /tpadmin [Player Name]")
-                    elif len(args) > 0:
-                        targetname = self.CheckV(Player, args)
-                        if targetname is None:
-                            return
-                        DataStore.Add("SavedLocation", Player.SteamID, Player.Location)
-                        distance = DataStore.Get("AdminPlus", "Distance")
-                        vector3 = Util.Infront(targetname, int(distance))
-                        Player.SafeTeleportTo(vector3)
-                        Player.MessageFrom("AdminPlus", "Teleported: " + distance + "m Behind: " + targetname.Name)
-                        Player.MessageFrom("AdminPlus", "Use /tpback to go back to your last location")
                     else:
-                        Player.MessageFrom("AdminPlus", "Unknown Command")
+                        target = self.CheckV(Player, args)
+                        if target is not None:
+                            DataStore.Add("SavedLocation", Player.SteamID, Player.Location)
+                            distance = DataStore.Get("AdminPlus", "Distance")
+                            if distance is None:
+                                distance = float(30)
+                            vector3 = Util.Infront(target, distance)
+                            Player.SafeTeleportTo(vector3)
+                            Player.MessageFrom("AdminPlus", "Teleported: " + str(distance) + "m infront of " + target.Name)
+                            Player.MessageFrom("AdminPlus", "Use /tpback to go back to your last location")
+                        else:
+                            return
                 else:
-                    Player.MessageFrom("AdminPlus", "You are not on duty!")
+                    Player.MessageFrom("AdminPlus", "You're not on duty!")
             else:
-                Player.MessageFrom("AdminPlus", "You are not allowed to use that command!")
+                Player.MessageFrom("AdminPlus", "You're not allowed to use that command!")
         elif cmd == "tpback":
             if Player.Admin or self.isMod(Player.SteamID):
                 if self.dutyfirst(Player):
@@ -214,9 +215,9 @@ class AdminPlus:
                     elif len(args) > 0:
                         Player.MessageFrom("AdminPlus", "Usage: /tpback")
                 else:
-                    Player.MessageFrom("AdminPlus", "You are not on duty!")
+                    Player.MessageFrom("AdminPlus", "You're not on duty!")
             else:
-                Player.MessageFrom("AdminPlus", "You are not allowed to use that command!")
+                Player.MessageFrom("AdminPlus", "You're not allowed to use that command!")
 
     def On_PlayerDisconnected(self, Player):
         try:
