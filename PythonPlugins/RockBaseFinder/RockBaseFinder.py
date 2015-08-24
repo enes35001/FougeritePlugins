@@ -3,8 +3,7 @@ __author__ = 'Jakkee'
 __version__ = '1.0'
  
 import clr
-clr.AddReferenceByPartialName("Fougerite")
-clr.AddReferenceByPartialName("UnityEngine")
+clr.AddReferenceByPartialName("Fougerite", "UnityEngine")
 import UnityEngine
 import Fougerite
 
@@ -12,19 +11,20 @@ import Fougerite
 class RockBaseFinder:
     def On_EntityDeployed(self, Player, Entity):
         if Player.Admin:
-            origin = Util.CreateVector(Entity.X, Entity.Y + 1, Entity.Z)
-            direction = Util.CreateVector(float(0), float(1), float(0))
-            hit = UnityEngine.Physics.Raycast(origin, direction)
-            if hit:
-                Player.Message(str(hit))
-                #Player.Message("Hit")
-            else:
-                Player.Message("Nothing above")
+            origin = Util.CreateVector(Entity.X, Entity.Y, Entity.Z)
+            up = Util.CreateVector(float(0), float(1), float(0))
+            hit = UnityEngine.Physics.RaycastAll(origin, up)
+            Player.Message(str(len(hit)))
+            for x in hit:
+                tag = x.collider.gameObject.tag
+                Player.Message(tag)
+                #if entity is not None:
+            #else:
+                #Player.Message("Nothing above")
 
     def On_Command(self, Player, cmd, args):
         if cmd == "down":
             if Player.Admin:
-                #DiSt = int(DataStore.Get("RockBaseFinder", "Distance"))
                 Player.TeleportTo(Player.X, Player.Y - 2, Player.Z)
                 Player.Message("Teleported 2m below!")
             else:
