@@ -4,8 +4,6 @@ __version__ = '1.0.1'
 
 import clr
 clr.AddReferenceByPartialName("Fougerite")
-clr.AddReferenceByPartialName("UnityEngine")
-import UnityEngine
 import Fougerite
 
 
@@ -52,44 +50,44 @@ class BuildingRestriction:
 
     def On_EntityDeployed(self, Player, Entity):
         if Entity.Name == "WoodPillar" or "MetalPillar":
-            """if self.isAdmin(Player):
+            if self.isAdmin(Player):
                 return
             elif self.isMod(Player.SteamID):
                 return
-            else:"""
-            height = round(int(DataStore.Get("BuildingRestriction", "Max Height")), 0)
-            for pillar in Entity.GetLinkedStructs():
-                if pillar.Name != "WoodPillar" or "MetalPillar":
-                    continue
-                if height < Entity.Y - pillar.Y:
-                    Server.Broadcast("Callback")
-                    try:
-                        Player.Inventory.AddItem(Entity.Name, 1)
-                        Player.InventoryNotice("1 x " + Entity.Name)
-                        Entity.Destroy()
-                        Player.Message("Max build height reached for this base [ " + str(DataStore.Get("BuildingRestriction", "Max Height") / 4) + " units tall ]")
-                    except:
-                        pass
-                    break
+            else:
+                height = round(int(DataStore.Get("BuildingRestriction", "Max Height")), 0)
+                for pillar in Entity.GetLinkedStructs():
+                    if pillar.Name != "WoodPillar" or "MetalPillar":
+                        continue
+                    if height < Entity.Y - pillar.Y:
+                        Server.Broadcast("Callback")
+                        try:
+                            Player.Inventory.AddItem(Entity.Name, 1)
+                            Player.InventoryNotice("1 x " + Entity.Name)
+                            Entity.Destroy()
+                            Player.Message("Max build height reached for this base [ " + str(DataStore.Get("BuildingRestriction", "Max Height") / 4) + " units tall ]")
+                        except:
+                            pass
+                        break
         elif Entity.Name == "WoodFoundation" or "MetalFoundation":
-            """if self.isAdmin(Player):
+            if self.isAdmin(Player):
                 return
             elif self.isMod(Player.SteamID):
                 return
-            else:"""
-            count = 0
-            total = int(DataStore.Get("BuildingRestriction", "Max Foundations"))
-            for foundation in Entity.GetLinkedStructs():
-                if foundation.Name != "WoodFoundation" or "MetalFoundation":
-                    continue
-                count += 1
-                if count == total:
-                    Server.Broadcast("Callback")
-                    try:
-                        Player.Inventory.AddItem(Entity.Name, 1)
-                        Player.InventoryNotice("1 x " + Entity.Name)
-                        Entity.Destroy()
-                        Player.Message("Max foundations reached for this base [ " + str(DataStore.Get("BuildingRestriction", "Max Foundations")) + " Foundations ]")
-                    except:
-                        pass
-                    break
+            else:
+                count = 0
+                total = int(DataStore.Get("BuildingRestriction", "Max Foundations"))
+                for foundation in Entity.GetLinkedStructs():
+                    if foundation.Name != "WoodFoundation" or "MetalFoundation":
+                        continue
+                    count += 1
+                    if count == total:
+                        Server.Broadcast("Callback")
+                        try:
+                            Player.Inventory.AddItem(Entity.Name, 1)
+                            Player.InventoryNotice("1 x " + Entity.Name)
+                            Entity.Destroy()
+                            Player.Message("Max foundations reached for this base [ " + str(DataStore.Get("BuildingRestriction", "Max Foundations")) + " Foundations ]")
+                        except:
+                            pass
+                        break
