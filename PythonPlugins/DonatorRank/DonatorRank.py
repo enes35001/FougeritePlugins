@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 __title__ = 'DonatorRank'
 __author__ = 'Jakkee'
-__version__ = '1.5'
+__version__ = '1.5.1'
  
 import clr
 clr.AddReferenceByPartialName("Fougerite")
@@ -548,11 +548,11 @@ class DonatorRank:
                         else:
                             sett = self.GetSettingsIni()
                             waittime = DataStore.Get("DonatorRank", "LVL1VKITCoolDown")
-                            if DataStore.Get("LVL1VKitCooldown", Player.SteamID) is None:
-                                time = 0
-                            else:
-                                time = DataStore.Get("LVL1VKitCooldown", Player.SteamID)
+                            time = DataStore.Get("LVL1VKitCooldown", Player.SteamID)
+                            try:
                                 time = int(time)
+                            except:
+                                time = 0
                             calc = System.Environment.TickCount - time
                             if calc >= waittime or Player.Admin:
                                 DataStore.Add("LVL1VKitCooldown", Player.SteamID, System.Environment.TickCount)
@@ -576,11 +576,11 @@ class DonatorRank:
                         else:
                             sett = self.GetSettingsIni()
                             waittime = DataStore.Get("DonatorRank", "LVL2VKITCoolDown")
-                            if DataStore.Get("LVL2VKitCooldown", Player.SteamID) is None:
-                                time = 0
-                            else:
-                                time = DataStore.Get("LVL2VKitCooldown", Player.SteamID)
+                            time = DataStore.Get("LVL2VKitCooldown", Player.SteamID)
+                            try:
                                 time = int(time)
+                            except:
+                                time = 0
                             calc = System.Environment.TickCount - time
                             if calc >= waittime or Player.Admin or time == 0:
                                 DataStore.Add("LVL2VKitCooldown", Player.SteamID, System.Environment.TickCount)
@@ -611,11 +611,11 @@ class DonatorRank:
                         else:
                             sett = self.GetSettingsIni()
                             waittime = DataStore.Get("DonatorRank", "LVL1DKITCoolDown")
-                            if DataStore.Get("LVL1DKitCooldown", Player.SteamID) is None:
-                                time = 0
-                            else:
-                                time = DataStore.Get("LVL1DKitCooldown", Player.SteamID)
+                            time = DataStore.Get("LVL1DKitCooldown", Player.SteamID)
+                            try:
                                 time = int(time)
+                            except:
+                                time = 0
                             calc = System.Environment.TickCount - int(time)
                             if calc >= waittime or Player.Admin or time == 0:
                                 DataStore.Add("LVL1DKitCooldown", Player.SteamID, System.Environment.TickCount)
@@ -641,11 +641,11 @@ class DonatorRank:
                         else:
                             sett = self.GetSettingsIni()
                             waittime = DataStore.Get("DonatorRank", "LVL2DKITCoolDown")
-                            if DataStore.Get("LVL2DKitCooldown", Player.SteamID) is None:
-                                time = 0
-                            else:
-                                time = DataStore.Get("LVL2DKitCooldown", Player.SteamID)
+                            time = DataStore.Get("LVL2DKitCooldown", Player.SteamID)
+                            try:
                                 time = int(time)
+                            except:
+                                time = 0
                             calc = System.Environment.TickCount - time
                             if calc >= waittime or Player.Admin or time == 0:
                                 DataStore.Add("LVL2DKitCooldown", Player.SteamID, System.Environment.TickCount)
@@ -703,8 +703,9 @@ class DonatorRank:
                 elif len(args) == 1:
                     waittime = DataStore.Get("DonatorRank", "VTPCoolDown")
                     time = DataStore.Get("VTPCooldown", Player.SteamID)
-                    time = int(time)
-                    if time is None:
+                    try:
+                        time = int(time)
+                    except:
                         time = 0
                     calc = System.Environment.TickCount - time
                     if DataStore.Get("DonatorRank", "VTP" + args[0]) is not None:
@@ -744,7 +745,9 @@ class DonatorRank:
                     waittime = DataStore.Get("DonatorRank", "DTPCoolDown")
                     time = DataStore.Get("DTPCooldown", Player.SteamID)
                     time = int(time)
-                    if time is None:
+                    try:
+                        time = int(time)
+                    except:
                         time = 0
                     calc = System.Environment.TickCount - time
                     if DataStore.Get("DonatorRank", "DTP" + args[0]) is not None:
@@ -926,13 +929,13 @@ class DonatorRank:
             ini = self.getUserIni()
             if ini.GetSetting(Player.SteamID, "Rank") == "Mod":
                 return True
-            elif DataStore.ContainsKey("Moderators", Player.SteamID):
+            elif DataStore.ContainsKey("Moderators", Player.SteamID) or Player.Moderator:
                 if ini.GetSetting(Player.SteamID, "Rank") == "Mod":
                     return True
                 d = Plugin.GetDate()
                 t = Plugin.GetTime()
                 ini.AddSetting(modname.SteamID, "UserName", modname.Name)
-                ini.AddSetting(modname.SteamID, "INFO", "Time: " + t + "||Date: " + d + "||By: SERVER CONSOLE")
+                ini.AddSetting(modname.SteamID, "INFO", "Time: " + t + "||Date: " + d + "||By: DonatorRank-AutoAdd")
                 ini.AddSetting(modname.SteamID, "Rank", "Mod")
                 ini.AddSetting(modname.SteamID, "MaxHomes", DataStore.Get("DonatorRank", "ModHomesMax"))
                 ini.AddSetting(modname.SteamID, "AddVIPS", "true")
