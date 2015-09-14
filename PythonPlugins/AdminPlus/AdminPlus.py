@@ -30,8 +30,7 @@ class AdminPlus:
 
     def On_DoorUse(self, Player, DoorUseEvent):
         if self.toggled(Player):
-            if DataStore.Get("AdminPlus", "AccessDoors") == "true":
-                DoorUseEvent.Open = True
+            DoorUseEvent.Open = True
 
     def isMod(self, id):
         if DataStore.ContainsKey("Moderators", id):
