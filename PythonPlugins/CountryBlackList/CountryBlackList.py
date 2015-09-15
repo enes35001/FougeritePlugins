@@ -1,6 +1,6 @@
 __title__ = 'CountryBlackList'
 __author__ = 'Jakkee'
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 
 import clr
 clr.AddReferenceByPartialName("Fougerite")
@@ -21,6 +21,19 @@ class CountryBlackList:
             ini.AddSetting("Messages", "DisconnectMessage", "Your country is on the servers blacklist")
             ini.AddSetting("Messages", "OtherDisconnectMessage", "[color cyan]%player%[/color] is trying to connect from: [color cyan]%country%[/color] but is black listed")
             ini.Save()
+        ini = Plugin.GetIni("Settings")
+        if not ini.ContainsSetting("Settings", "LogErrors"):
+            ini.AddSetting("Settings", "LogErrors", "true")
+            ini.Save()
+        DataStore.Add("CountryBlackList", "ShowAcceptedMessage", ini.GetBoolSetting("Settings", "ShowAcceptedMessage"))
+        DataStore.Add("CountryBlackList", "ShowDeniedMessage", ini.GetBoolSetting("Settings", "ShowDeniedMessage"))
+        DataStore.Add("CountryBlackList", "LogTimedOutConnection", ini.GetBoolSetting("Settings", "LogTimedOutConnection"))
+        DataStore.Add("CountryBlackList", "LogErrors", ini.GetBoolSetting("Settings", "LogErrors"))
+        DataStore.Add("CountryBlackList", "BlackListedCountries", ini.GetSetting("BlackList", "BlackListedCountries"))
+        DataStore.Add("CountryBlackList", "JoinMessage", ini.GetSetting("Messages", "JoinMessage"))
+        DataStore.Add("CountryBlackList", "DisconnectMessage", ini.GetSetting("Messages", "DisconnectMessage"))
+        DataStore.Add("CountryBlackList", "OtherDisconnectMessage", ini.GetSetting("Messages", "OtherDisconnectMessage"))
+
 
     def find(self, b, c):
         try:
@@ -32,21 +45,27 @@ class CountryBlackList:
                 if c == a:
                     return True
             return False
-        except:
+        except Exception, e:
+            if DataStore.Get("CountryBlackList", "LogErrors"):
+                Plugin.Log("Error Log", str(e))
             return False
 
     def getcountry(self, Player):
         try:
-            country = Web.GET("http://ipinfo.io/" + Player.IP + "/country")
+            ip = Player.IP
+            if ip == "127.0.0.1":
+                ip = Util.GetStaticField("server", "ip")
+            country = Web.GET("http://ipinfo.io/" + ip + "/country")
             return country
-        except:
-            ini = Plugin.GetIni("Settings")
-            if ini.GetSetting("Settings", "ShowDeniedMessage") == "true":
-                a = ini.GetSetting("Messages", "JoinMessage")
+        except Exception, e:
+            if DataStore.Get("CountryBlackList", "LogErrors"):
+                Plugin.Log("Error Log", str(e))
+            if DataStore.Get("CountryBlackList", "ShowDeniedMessage"):
+                a = DataStore.Get("CountryBlackList", "JoinMessage")
                 a = a.Replace("%player%", Player.Name)
                 a = a.Replace("%country%", "unknown")
                 Server.Broadcast(a)
-            if ini.GetSetting("Settings", "LogTimedOutConnection") == "true":
+            if DataStore.Get("CountryBlackList", "LogTimedOutConnection"):
                 if not Plugin.IniExists("ConnectionLog"):
                     Plugin.CreateIni("ConnectionLog")
                     log = Plugin.GetIni("ConnectionLog")
@@ -54,27 +73,27 @@ class CountryBlackList:
                 log = Plugin.GetIni("ConnectionLog")
                 log.AddSetting("Timed out connections", Plugin.GetDate() + "|" + Plugin.GetTime() + " ", " SteamID: " + Player.SteamID + ". Name: " + Player.Name + ". IP: " + Player.IP)
                 log.Save()
-            pass
 
     def On_PlayerConnected(self, Player):
         try:
-            ini = Plugin.GetIni("Settings")
-            bl = ini.GetSetting("BlackList", "BlackListedCountries")
+            bl = DataStore.Get("CountryBlackList", "BlackListedCountries")
             c = self.getcountry(Player)
             if self.find(bl, c):
-                pdis = ini.GetSetting("Messages", "DisconnectMessage")
+                pdis = DataStore.Get("CountryBlackList", "DisconnectMessage")
                 Player.Message(pdis + "[color red][[color cyan]" + c + "[color red]]")
                 Player.Disconnect()
-                if ini.GetSetting("Settings", "ShowAcceptedMessage") == "true":
-                    a = ini.GetSetting("Messages", "OtherDisconnectMessage")
+                if DataStore.Get("CountryBlackList", "ShowAcceptedMessage"):
+                    a = DataStore.Get("CountryBlackList", "OtherDisconnectMessage")
                     a = a.Replace("%player%", Player.Name)
                     a = a.Replace("%country%", c)
                     Server.Broadcast(a)
             else:
-                if ini.GetSetting("Settings", "ShowAcceptedMessage") == "true":
-                    a = ini.GetSetting("Messages", "JoinMessage")
+                if DataStore.Get("CountryBlackList", "ShowAcceptedMessage"):
+                    a = DataStore.Get("CountryBlackList", "JoinMessage")
                     a = a.Replace("%player%", Player.Name)
                     a = a.Replace("%country%", c)
                     Server.Broadcast(a)
-        except:
+        except Exception, e:
+            if DataStore.Get("CountryBlackList", "LogErrors"):
+                Plugin.Log("Error Log", str(e))
             pass
