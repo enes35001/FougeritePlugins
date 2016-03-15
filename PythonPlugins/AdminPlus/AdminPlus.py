@@ -1,10 +1,11 @@
 __title__ = 'AdminPlus'
 __author__ = 'Jakkee'
-__version__ = '1.8.3'
+__version__ = '1.8.6'
 
 import clr
 clr.AddReferenceByPartialName("Fougerite")
 import Fougerite
+PluginSettings = {}
 
 
 class AdminPlus:
@@ -20,21 +21,21 @@ class AdminPlus:
             ini.AddSetting("Commands", "Player must run duty first?", "true")
             ini.AddSetting("AdminDoors", "76561198135558142", "Jakkee //These are the players who can open any door in the server! (/admin doors) to add/remove yourself")
             ini.Save()
-        DataStore.Flush("AdminPlus")
+        PluginSettings.clear()
         ini = Plugin.GetIni("Settings")
-        DataStore.Add("AdminPlus", "DestroyEnabled", ini.GetSetting("Config", "AdminDestroyEnabled"))
-        DataStore.Add("AdminPlus", "Distance", float(ini.GetSetting("Config", "AdminTPDistance")))
-        DataStore.Add("AdminPlus", "DestroyWeapon", ini.GetSetting("Config", "AdminDestroyWeapon"))
-        DataStore.Add("AdminPlus", "ModeratorsCanUse", ini.GetSetting("Config", "ModeratorsCanUse"))
-        DataStore.Add("AdminPlus", "DutyFirst", ini.GetSetting("Commands", "Player must run duty first?"))
+        PluginSettings["DestroyEnabled"] = ini.GetBoolSetting("Config", "AdminDestroyEnabled")
+        PluginSettings["Distance"] = float(ini.GetSetting("Config", "AdminTPDistance"))
+        PluginSettings["DestroyWeapon"] = ini.GetSetting("Config", "AdminDestroyWeapon")
+        PluginSettings["ModeratorsCanUse"] = ini.GetBoolSetting("Config", "ModeratorsCanUse")
+        PluginSettings["DutyFirst"] = ini.GetBoolSetting("Commands", "Player must run duty first?")
 
     def On_DoorUse(self, Player, DoorUseEvent):
         if self.toggled(Player):
             DoorUseEvent.Open = True
 
-    def isMod(self, id):
-        if DataStore.ContainsKey("Moderators", id):
-            if DataStore.Get("AdminPlus", "ModeratorsCanUse"):
+    def isMod(self, Player):
+        if DataStore.ContainsKey("Moderators", Player.SteamID) or Player.Moderator:
+            if PluginSettings["ModeratorsCanUse"]:
                 return True
             else:
                 return False
@@ -43,7 +44,7 @@ class AdminPlus:
 
     def On_Command(self, Player, cmd, args):
         if cmd == "admin":
-            if Player.Admin or self.isMod(Player.SteamID):
+            if Player.Admin or self.isMod(Player):
                 if len(args) == 0:
                     Player.MessageFrom("AdminPlus", "/tpadmin [name] (Teleports you 30units away from the target)")
                     Player.MessageFrom("AdminPlus", "/tpback (Teleports you back to where you were)")
@@ -162,7 +163,7 @@ class AdminPlus:
             else:
                 Player.MessageFrom("AdminPlus", "You're not allowed to use this command!")
         elif cmd == "duty":
-            if Player.Admin or self.isMod(Player.SteamID):
+            if Player.Admin or self.isMod(Player):
                 if len(args) == 0:
                     Player.MessageFrom("AdminPlus", "Usage: /duty [on/off]")
                 elif len(args) == 1:
@@ -179,7 +180,7 @@ class AdminPlus:
             else:
                 Player.MessageFrom("AdminPlus", "You're not allowed to use that command!")
         elif cmd == "tpadmin":
-            if Player.Admin or self.isMod(Player.SteamID):
+            if Player.Admin or self.isMod(Player):
                 if self.dutyfirst(Player):
                     if len(args) == 0:
                         Player.MessageFrom("AdminPlus", "Usage: /tpadmin [Player Name]")
@@ -187,7 +188,7 @@ class AdminPlus:
                         target = self.CheckV(Player, args)
                         if target is not None:
                             DataStore.Add("SavedLocation", Player.SteamID, Player.Location)
-                            distance = DataStore.Get("AdminPlus", "Distance")
+                            distance = PluginSettings["Distance"]
                             if distance is None:
                                 distance = float(30)
                             vector3 = Util.Infront(target, distance)
@@ -201,7 +202,7 @@ class AdminPlus:
             else:
                 Player.MessageFrom("AdminPlus", "You're not allowed to use that command!")
         elif cmd == "tpback":
-            if Player.Admin or self.isMod(Player.SteamID):
+            if Player.Admin or self.isMod(Player):
                 if self.dutyfirst(Player):
                     if len(args) == 0:
                         if DataStore.Get("SavedLocation", Player.SteamID):
@@ -231,8 +232,8 @@ class AdminPlus:
     def On_EntityHurt(self, HurtEvent):
         try:
             if HurtEvent.Attacker.Admin:
-                if DataStore.Get("AdminPlus", "DestroyEnabled") == "true":
-                    if HurtEvent.WeaponName == DataStore.Get("AdminPlus", "DestroyWeapon"):
+                if PluginSettings["DestroyEnabled"]:
+                    if HurtEvent.WeaponName == PluginSettings["DestroyWeapon"]:
                         if HurtEvent.Entity.Name is not None:
                             HurtEvent.Entity.Destroy()
         except:
@@ -240,7 +241,7 @@ class AdminPlus:
 
     def dutyfirst(self, Player):
         try:
-            if DataStore.Get("AdminPlus", "DutyFirst") == "true":
+            if PluginSettings["DutyFirst"]:
                 if DataStore.Get("OnDuty", Player.SteamID) == "on":
                     return True
                 else:
@@ -248,7 +249,7 @@ class AdminPlus:
             else:
                 return True
         except:
-            pass
+            return False
 
     def toggle(self, Player):
         ini = Plugin.GetIni("Settings")
