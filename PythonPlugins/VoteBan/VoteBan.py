@@ -1,11 +1,13 @@
 __title__ = 'VoteBan'
 __author__ = 'Jakkee'
-__version__ = '1.1'
+__version__ = '1.1.3'
 
 import clr
 clr.AddReferenceByPartialName("Fougerite")
 import Fougerite
 import System
+
+PluginSettings = {}
 
 
 class VoteBan:
@@ -35,15 +37,16 @@ class VoteBan:
             Server.Broadcast("Please do not question or complain to the server staff")
             Server.Broadcast("--------------------------------------------------------------------")
             self.removetarget()
+        PluginSettings.clear()
         DataStore.Flush("VoteBanY")
         DataStore.Flush("VoteBanN")
         DataStore.Flush("RIGGED")
         DataStore.Flush("VoteBan")
         self.killtimer("VoteBanTimer")
         ini = Plugin.GetIni("Settings")
-        DataStore.Add("VoteBan", "ModsUse", ini.GetSetting("Config", "Moderators can use"))
-        DataStore.Add("VoteBan", "ModsBanned", ini.GetSetting("Config", "Moderators can be banned?"))
-        DataStore.Add("VoteBan", "AdminBanned", ini.GetSetting("Config", "Admins can be banned?"))
+        PluginSettings["ModsUse"] = ini.GetBoolSetting("Config", "Moderators can use")
+        PluginSettings["ModsBanned"] = ini.GetBoolSetting("Config", "Moderators can be banned?")
+        PluginSettings["AdminBanned"] = ini.GetBoolSetting("Config", "Admins can be banned?")
         i = self.cn(ini.GetSetting("Config", "VoteTime in seconds"))
         if i is not None:
             DataStore.Add("VoteBan", "VoteTime", i * 1000)
@@ -76,32 +79,32 @@ class VoteBan:
         try:
             if Player.Admin:
                 return True
-            elif DataStore.ContainsKey("Moderators", Player.SteamID):
-                if DataStore.Get("VoteBan", "ModsUse") == "true":
+            elif DataStore.ContainsKey("Moderators", Player.SteamID) or Player.Moderator:
+                if PluginSettings["ModsUse"]:
                     return True
                 else:
                     return False
             else:
                 return False
         except:
-            pass
+            return False
 
     def isBannable(self, Player):
         try:
             if Player.Admin:
-                if DataStore.Get("VoteBan", "AdminBanned") == "true":
+                if PluginSettings["AdminsBanned"]:
                     return True
-                elif DataStore.ContainsKey("Moderators", Player.SteamID):
-                    if DataStore.Get("VoteBan", "ModsBanned") == "true":
-                        return True
-                    else:
-                        return False
+                else:
+                    return False
+            elif Player.Moderator:
+                if PluginSettings["ModsBanned"]:
+                    return True
                 else:
                     return False
             else:
-                return False
+                return True
         except:
-            pass
+            return True
 
     def killtimer(self, name):
         timer = Plugin.GetTimer(name)
@@ -175,35 +178,11 @@ class VoteBan:
             ini = Plugin.GetIni("Bans")
             ini.AddSetting("BannedList", "ID:" + self.targetid + " IP:" + self.targetip + " ", " " + self.targetname + " [" + Plugin.GetDate() + "|" + Plugin.GetTime() + "] INFO: " + reason)
             ini.Save()
-            self.disconnectplayer()
+            Server.BanPlayer(self.target, "VoteBan", reason, None)
             self.removetarget()
         except:
+            Util.Log("VoteBan: Error banning a player!")
             pass
-
-    def On_PlayerConnected(self, Player):
-        if self.isbanned(Player):
-            Player.MessageFrom("BANNED", "[color red] - YOU ARE BANNED! - [/color]")
-            Player.Disconnect()
-
-    def isbanned(self, Player):
-        try:
-            if not Plugin.IniExists("Bans"):
-                Plugin.CreateIni("Bans")
-                ini = Plugin.GetIni("Bans")
-                ini.Save()
-            ip = Player.IP
-            id = Player.SteamID
-            bans = Plugin.GetIni("Bans")
-            key = bans.EnumSection("BannedList")
-            for keys in key:
-                if ip in keys or id in keys:
-                    return True
-                continue
-            else:
-                return False
-        except x:
-            Util.Log("ERROR in Voteban: " + x)
-            return False
 
     def On_PlayerDisconnected(self, Player):
         try:
@@ -242,7 +221,7 @@ class VoteBan:
             if DataStore.Count("VoteBanN") is None:
                 no = 0
             else:
-                no = DataStore.Count("VoteBanY")
+                no = DataStore.Count("VoteBanN")
             total = yes + no
             min = DataStore.Get("VoteBan", "Min")
             if round((yes / total) * 100, 2) >= min:

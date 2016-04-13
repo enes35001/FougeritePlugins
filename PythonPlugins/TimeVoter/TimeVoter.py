@@ -1,6 +1,6 @@
 __title__ = 'TimeVoter'
 __author__ = 'Jakkee'
-__version__ = '1.1'
+__version__ = '1.1.1'
 
 import clr
 clr.AddReferenceByPartialName("Fougerite")
@@ -63,25 +63,27 @@ class TimeVoter:
         try:
             i = int(arg)
             return i
+            #Return number from string
         except:
             return None
+            #Return None when string is not a number
 
     def checkstringifnumber(self, arg):
         try:
             b = int(arg)
             if b > 24 or b < 1:
-                #returns 101 when number is less than 1 or greater than 24
                 return 101
-            #returns a number between 1 - 24 (includes 1 and 24)
+                #returns 101 when number is less than 1 or greater than 24
             return b
+            #returns a number between 1 - 24 (includes 1 and 24)
         except:
-            #returns 100 when string is not a number
             return 100
+            #returns 100 when string is not a number
 
     def On_PlayerDisconnected(self, Player):
         try:
             if DataStore.Get("VoteNight", Player.SteamID) == "night":
-                DataStore.Remove("VoteDay", Player.SteamID)
+                DataStore.Remove("VoteNight", Player.SteamID)
             elif DataStore.Get("VoteDay", Player.SteamID) == "day":
                 DataStore.Remove("VoteDay", Player.SteamID)
         except:
@@ -108,10 +110,10 @@ class TimeVoter:
             self.removevotes()
             return
         else:
-            day = DataStore.Count("VoteDay")
-            night = DataStore.Count("VoteNight")
-            min = DataStore.Get("TimeVoter", "Min")
-            total = day + night
+            day = float(DataStore.Count("VoteDay"))
+            night = float(DataStore.Count("VoteNight"))
+            min = float(DataStore.Get("TimeVoter", "Min"))
+            total = float(day + night)
             if round((day / total) * 100, 2) > min:
                 World.Time = 6
                 Server.Broadcast("--------------------------- [color green]TimeVoter[/color] ---------------------------")
@@ -127,14 +129,10 @@ class TimeVoter:
                 self.removevotes()
 
     def removevotes(self):
-        try:
-            #Might throw an error if a player leaves the server while removing votes, I don't think it would but you can never be sure
-            DataStore.Flush("RIGGED")
-            DataStore.Flush("VoteDay")
-            DataStore.Flush("VoteNight")
-            DataStore.Flush("Voter")
-        except:
-            pass
+        DataStore.Flush("RIGGED")
+        DataStore.Flush("VoteDay")
+        DataStore.Flush("VoteNight")
+        DataStore.Flush("Voter")
 
     def On_Command(self, Player, cmd, args):
         if cmd == "vote":
