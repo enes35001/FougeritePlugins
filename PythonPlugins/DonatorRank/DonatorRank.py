@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 __title__ = 'DonatorRank'
 __author__ = 'Jakkee'
-__version__ = '1.6.1'
+__version__ = '1.7.1'
+__about__ = "Create VIPs and Donators"
  
 import clr
 clr.AddReferenceByName("Fougerite")
@@ -40,16 +41,24 @@ class DonatorRank:
             ini.AddSetting("Settings", "LogBroadcast", "true")
             ini.AddSetting("Settings", ";Below only works with HomeSystem installed", "")
             ini.AddSetting("Settings", "PlayerMaxhomes", "1")
+            ini.AddSetting("Settings", "PlayerHomeCooldown", "300")
+            ini.AddSetting("Settings", "PlayerHomeTpDelay", "10")
             ini.AddSetting("ModSettings", "ModeratorColour", "[color white]")
             ini.AddSetting("ModSettings", "Maxhomes", "3")
-            ini.AddSetting("DonatorSettings", "DonatorColour", "[color white]")
-            ini.AddSetting("DonatorSettings", "Maxhomes", "3")
-            ini.AddSetting("DonatorSettings", "LVL1KitCooldown", "80")
-            ini.AddSetting("DonatorSettings", "LVL2KitCooldown", "80")
+            ini.AddSetting("ModSettings", "HomeCooldown", "300")
+            ini.AddSetting("ModSettings", "HomeTpDelay", "10")
             ini.AddSetting("VIPSettings", "VIPColour", "[color white]")
             ini.AddSetting("VIPSettings", "Maxhomes", "2")
+            ini.AddSetting("VIPSettings", "HomeCooldown", "200")
+            ini.AddSetting("VIPSettings", "HomeTpDelay", "5")
             ini.AddSetting("VIPSettings", "LVL1KitCooldown", "120")
             ini.AddSetting("VIPSettings", "LVL2KitCooldown", "120")
+            ini.AddSetting("DonatorSettings", "DonatorColour", "[color white]")
+            ini.AddSetting("DonatorSettings", "Maxhomes", "3")
+            ini.AddSetting("DonatorSettings", "HomeCooldown", "60")
+            ini.AddSetting("DonatorSettings", "HomeTpDelay", "3")
+            ini.AddSetting("DonatorSettings", "LVL1KitCooldown", "80")
+            ini.AddSetting("DonatorSettings", "LVL2KitCooldown", "80")
             ini.AddSetting("VKIT_Level1", "Inv1", "P250")
             ini.AddSetting("VKIT_Level1", "Qty1", "1")
             ini.AddSetting("VKIT_Level1", "Inv2", "9mm Ammo")
@@ -168,14 +177,22 @@ class DonatorRank:
         PSettings["LogTPS"] = ini.GetBoolSetting("Settings", "LogTps")
         PSettings["LogKicks"] = ini.GetBoolSetting("Settings", "LogKicks")
         PSettings["LogBroadcasts"] = ini.GetBoolSetting("Settings", "LogBroadcast")
-        PSettings["PlayerHomesMax"] = ini.GetSetting("Settings", "PlayerMaxhomes")
+        PSettings["PlayerHomesMax"] = self.StrToInt(ini.GetSetting("Settings", "PlayerMaxhomes"), "180")
         PSettings["ModHomesMax"] = ini.GetSetting("ModSettings", "Maxhomes")
         PSettings["DonatorHomesMax"] = ini.GetSetting("DonatorSettings", "Maxhomes")
         PSettings["VIPHomesMax"] = ini.GetSetting("VIPSettings", "Maxhomes")
-        PSettings["LVL1DKITCoolDown"] = int(ini.GetSetting("DonatorSettings", "LVL1KitCooldown")) * 1000
-        PSettings["LVL1VKITCoolDown"] = int(ini.GetSetting("VIPSettings", "LVL1KitCooldown")) * 1000
-        PSettings["LVL2DKITCoolDown"] = int(ini.GetSetting("DonatorSettings", "LVL2KitCooldown")) * 1000
-        PSettings["LVL2VKITCoolDown"] = int(ini.GetSetting("VIPSettings", "LVL2KitCooldown")) * 1000
+        PSettings["HomeCoolDown"] = self.StrToInt(ini.GetSetting("Settings", "PlayerHomeCooldown"), "184") * 1000
+        PSettings["HomeTpDelay"] = self.StrToInt(ini.GetSetting("Settings", "PlayerHomeTpDelay"), "185")
+        PSettings["VHomeCoolDown"] = self.StrToInt(ini.GetSetting("VIPSettings", "HomeCooldown"), "186") * 1000
+        PSettings["VHomeTpDelay"] = self.StrToInt(ini.GetSetting("VIPSettings", "HomeTpDelay"), "187")
+        PSettings["DHomeCoolDown"] = self.StrToInt(ini.GetSetting("DonatorSettings", "HomeCooldown"), "188") * 1000
+        PSettings["DHomeTpDelay"] = self.StrToInt(ini.GetSetting("DonatorSettings", "HomeTpDelay"), "189")
+        PSettings["MHomeCoolDown"] = self.StrToInt(ini.GetSetting("ModSettings", "HomeCooldown"), "190") * 1000
+        PSettings["MHomeTpDelay"] = self.StrToInt(ini.GetSetting("ModSettings", "HomeTpDelay"), "191")
+        PSettings["LVL1DKITCoolDown"] = self.StrToInt(ini.GetSetting("DonatorSettings", "LVL1KitCooldown"), "192") * 1000
+        PSettings["LVL1VKITCoolDown"] = self.StrToInt(ini.GetSetting("VIPSettings", "LVL1KitCooldown"), "193") * 1000
+        PSettings["LVL2DKITCoolDown"] = self.StrToInt(ini.GetSetting("DonatorSettings", "LVL2KitCooldown"), "194") * 1000
+        PSettings["LVL2VKITCoolDown"] = self.StrToInt(ini.GetSetting("VIPSettings", "LVL2KitCooldown"), "195") * 1000
         count = 1
         for key in ini.EnumSection("VKIT_Level1"):
             if "Inv" in key:
@@ -197,10 +214,10 @@ class DonatorRank:
                 DKIT2[str(count)] = ini.GetSetting("DKIT_Level2", "Inv" + str(count)) + ":" + str(ini.GetSetting("DKIT_Level2", "Qty" + str(count)))
                 count += 1
         tp = Plugin.GetIni("TPLocations")
-        PSettings["VTPDELAY"] = int(tp.GetSetting("Settings", "VTP Delay")) * 1000
-        PSettings["VTPCoolDown"] = int(tp.GetSetting("Settings", "VTP Cooldown")) * 1000
-        PSettings["DTPDELAY"] = int(tp.GetSetting("Settings", "DTP Delay")) * 1000
-        PSettings["DTPCoolDown"] = int(tp.GetSetting("Settings", "DTP Cooldown")) * 1000
+        PSettings["VTPDELAY"] = self.StrToInt(tp.GetSetting("Settings", "VTP Delay"), "217") * 1000
+        PSettings["VTPCoolDown"] = self.StrToInt(tp.GetSetting("Settings", "VTP Cooldown"), "218") * 1000
+        PSettings["DTPDELAY"] = self.StrToInt(tp.GetSetting("Settings", "DTP Delay"), "219") * 1000
+        PSettings["DTPCoolDown"] = self.StrToInt(tp.GetSetting("Settings", "DTP Cooldown"), "220") * 1000
         count = 1
         for key in tp.EnumSection("VTP"):
             Vtp[str(count) + ":" + key] = tp.GetSetting("VTP", key)
@@ -209,56 +226,44 @@ class DonatorRank:
         for key in tp.EnumSection("DTP"):
             Dtp[str(count) + ":" + key] = tp.GetSetting("DTP", key)
             count += 1
-
-    def UpdatePerms(self):
-        UserPerms.clear()
-        users = self.getUserIni()
-        usercount = 0
-        settingcount = 0
-        for steamid in users.Sections:
-            usercount += 1
-            for setting in users.EnumSection(steamid):
-                UserPerms[steamid + ":" + setting] = users.GetSetting(steamid, setting)
-                settingcount += 1
-        Fougerite.Logger.LogWarning("DonatorRank: Found and loaded " + str(usercount) + " VIP/Donator users successfully!")
         
-    def On_Command(self, Player, cmd, args):
+    def On_Command(self, Player, cmd, args):        
         if cmd == "donatorhelp":
             if len(args) == 0:
-                rank = UserPerms[Player.SteamID + ":" + "Rank"]
+                rank = self.CheckPerm(Player.SteamID, "Rank")
                 if Player.Admin or rank == "VIP" or rank == "Donator" or rank == "Mod":
-                    if UserPerms[Player.SteamID + ":" + "AddVIPS"] or Player.Admin:
+                    if self.CheckPerm(Player.SteamID, "AddVIPS") or Player.Admin:
                         Player.Message("/vadd [playername] - Add a player as Vip")
-                    if UserPerms[Player.SteamID + ":" + "AddDonators"] or Player.Admin:
+                    if self.CheckPerm(Player.SteamID, "AddDonators") or Player.Admin:
                         Player.Message("/dadd [playername] - Add a player as Donator")
-                    if UserPerms[Player.SteamID + ":" + "AddMods"] or Player.Admin:
+                    if self.CheckPerm(Player.SteamID, "AddMods") or Player.Admin:
                         Player.Message("/madd [playername] - Add a player as Mod")
-                    if UserPerms[Player.SteamID + ":" + "DelVIPS"] or Player.Admin:
+                    if self.CheckPerm(Player.SteamID, "DelVIPS") or Player.Admin:
                         Player.Message("/vdel [playername] - Remove a player as Vip")
-                    if UserPerms[Player.SteamID + ":" + "DelDonators"] or Player.Admin:
+                    if self.CheckPerm(Player.SteamID, "DelDonators") or Player.Admin:
                         Player.Message("/ddel [playername] - Remove a player as Donator")
-                    if UserPerms[Player.SteamID + ":" + "DelMods"] or Player.Admin:
+                    if self.CheckPerm(Player.SteamID, "DelMods") or Player.Admin:
                         Player.Message("/mdel [playername] - Remove a player as Mod")
-                    if UserPerms[Player.SteamID + ":" + "LVL1VKIT"] or Player.Admin:
+                    if self.CheckPerm(Player.SteamID, "LVL1VKIT") or Player.Admin:
                         Player.Message("/vkit basic - Get the basic VIP kit")
-                    if UserPerms[Player.SteamID + ":" + "LVL2VKIT"] or Player.Admin:
+                    if self.CheckPerm(Player.SteamID, "LVL2VKIT") or Player.Admin:
                         Player.Message("/vkit advanced - Get the advanced VIP kit")
-                    if UserPerms[Player.SteamID + ":" + "LVL1DKIT"] or Player.Admin:
+                    if self.CheckPerm(Player.SteamID, "LVL1DKIT") or Player.Admin:
                         Player.Message("/dkit basic - Get the basic Donator kit")
-                    if UserPerms[Player.SteamID + ":" + "LVL2DKIT"] or Player.Admin:
+                    if self.CheckPerm(Player.SteamID, "LVL2DKIT") or Player.Admin:
                         Player.Message("/dkit advanced - Get the advanced Donator kit")
-                    if UserPerms[Player.SteamID + ":" + "MODKIT"] or Player.Admin:
+                    if self.CheckPerm(Player.SteamID, "MODKIT") or Player.Admin:
                         Player.Message("/mkit - Gives you invisible suit + uber items")
-                    if UserPerms[Player.SteamID + ":" + "VTP"] or Player.Admin:
+                    if self.CheckPerm(Player.SteamID, "VTP") or Player.Admin:
                         Player.Message("/vtp - Teleport to preset locations")
-                    if UserPerms[Player.SteamID + ":" + "DTP"] or Player.Admin:
+                    if self.CheckPerm(Player.SteamID, "DTP") or Player.Admin:
                         Player.Message("/dtp - Teleport to preset locations")
-                    if UserPerms[Player.SteamID + ":" + "MTP"] or Player.Admin:
+                    if self.CheckPerm(Player.SteamID, "MTP") or Player.Admin:
                         Player.Message("/mtp [Name] - Teleport to a player")
                         Player.Message("/mtpback - Teleport back to where you were")
-                    if UserPerms[Player.SteamID + ":" + "UseBroadcast"] or Player.Admin:
+                    if self.CheckPerm(Player.SteamID, "UseBroadcast") or Player.Admin:
                         Player.Message("/yell - Tell the server something")
-                    if UserPerms[Player.SteamID + ":" + "AccessInfo"] or Player.Admin:
+                    if self.CheckPerm(Player.SteamID, "AccessInfo") or Player.Admin:
                         Player.Message("/info [Name] - Get info about a player")
                 else:
                     Player.MessageFrom("DonatorRank", "Contact a staff member about becoming a VIP or Donator")
@@ -266,7 +271,7 @@ class DonatorRank:
                 Player.Message("Usage: /donatorhelp")
  
         elif cmd == "yell":
-            if UserPerms[Player.SteamID + ":" + "UseBroadcast"] or Player.Admin:
+            if self.CheckPerm(Player.SteamID, "UseBroadcast") or Player.Admin:
                 if args.Length > 0:
                     text = self.argsToText(args)
                     Server.BroadcastFrom("Player Broadcast", text)
@@ -285,7 +290,7 @@ class DonatorRank:
  
         elif cmd == "vadd":
             users = self.getUserIni()
-            if UserPerms[Player.SteamID + ":" + "AddVIPS"] or Player.Admin:
+            if self.CheckPerm(Player.SteamID, "AddVIPS") or Player.Admin:
                 if len(args) == 0:
                     Player.Message("Usage: /vadd [playername]")
                 else:
@@ -330,7 +335,7 @@ class DonatorRank:
  
         elif cmd == "dadd":
             users = self.getUserIni()
-            if UserPerms[Player.SteamID + ":" + "AddDonators"] or Player.Admin:
+            if self.CheckPerm(Player.SteamID, "AddDonators") or Player.Admin:
                 if len(args) == 0:
                     Player.Message("Usage: /dadd [playername]")
                 else:
@@ -344,11 +349,10 @@ class DonatorRank:
                             d = Plugin.GetDate()
                             t = Plugin.GetTime()
                             p = Player.Name
-                            ds = DataStore
                             users.AddSetting(donname.SteamID, "UserName", donname.Name)
                             users.AddSetting(donname.SteamID, "INFO", "Time: " + t + "||Date: " + d + "||By: " + p)
                             users.AddSetting(donname.SteamID, "Rank", "Donator")
-                            users.AddSetting(donname.SteamID, "MaxHomes", ds.Get("DonatorRank", "DonatorHomesMax"))
+                            users.AddSetting(donname.SteamID, "MaxHomes", PSettings["DonatorHomesMax"])
                             users.AddSetting(donname.SteamID, "AddVIPS", "false")
                             users.AddSetting(donname.SteamID, "AddDonators", "false")
                             users.AddSetting(donname.SteamID, "AddMods", "false")
@@ -376,7 +380,7 @@ class DonatorRank:
  
         elif cmd == "madd":
             users = self.getUserIni()
-            if UserPerms[Player.SteamID + ":" + "AddMods"] or Player.Admin:
+            if self.CheckPerm(Player.SteamID, "AddMods") or Player.Admin:
                 if len(args) == 0:
                     Player.Message("Usage: /madd [playername]")
                 else:
@@ -421,7 +425,7 @@ class DonatorRank:
  
         elif cmd == "vdel":
             users = self.getUserIni()
-            if UserPerms[Player.SteamID + ":" + "DelVIPS"] or Player.Admin:
+            if self.CheckPerm(Player.SteamID, "DelVIPS") or Player.Admin:
                 if len(args) == 0:
                     Player.Message("Usage: /vdel [playername]")
                 else:
@@ -461,7 +465,7 @@ class DonatorRank:
  
         elif cmd == "ddel":
             users = self.getUserIni()
-            if UserPerms[Player.SteamID + ":" + "DelDonators"] or Player.Admin:
+            if self.CheckPerm(Player.SteamID, "DelDonators") or Player.Admin:
                 if len(args) == 0:
                     Player.Message("Usage: /ddel [playername]")
                 else:
@@ -501,7 +505,7 @@ class DonatorRank:
  
         elif cmd == "mdel":
             users = self.getUserIni()
-            if UserPerms[Player.SteamID + ":" + "DelMods"] or Player.Admin:
+            if self.CheckPerm(Player.SteamID, "DelMods") or Player.Admin:
                 if len(args) == 0:
                     Player.Message("Usage: /mdel [playername]")
                 else:
@@ -541,15 +545,21 @@ class DonatorRank:
 
         elif cmd == "vkit":
             if len(args) == 0:
-                Player.Message("Usage: /vkit [basic / advanced]")
+                if self.CheckPerm(Player.SteamID, "LVL1VKIT") and self.CheckPerm(Player.SteamID, "LVL2VKIT") or Player.Admin:
+                    Player.Message("Usage: /vkit [basic / advanced]")
+                elif self.CheckPerm(Player.SteamID, "LVL1VKIT"):
+                    Player.Message("Usage: /dkit basic")
+                elif self.CheckPerm(Player.SteamID, "LVL2VKIT"):
+                    Player.Message("Usage: /dkit advanced")
+                else:
+                    Player.Message("You don't have permission to use this command!")
             elif len(args) == 1:
                 if args[0] == "basic":
-                    if UserPerms[Player.SteamID + ":" + "LVL1VKIT"] or Player.Admin:
+                    if self.CheckPerm(Player.SteamID, "LVL1VKIT") or Player.Admin:
                         count = len(VKIT1)
                         if Player.Inventory.FreeSlots <= count:
                             Player.Message("You need atleast " + str(count) + " free spaces!")
                         else:
-                            #sett = self.GetSettingsIni()
                             waittime = PSettings["LVL1VKITCoolDown"]
                             time = DataStore.Get("LVL1VKitCooldown", Player.SteamID)
                             try:
@@ -565,13 +575,10 @@ class DonatorRank:
                                 Player.Notice("You have redeemed kit: VIPKit Basic")
                             else:
                                 Player.Message("Time remaining: " + str(datetime.timedelta(0, (waittime / 1000) - (calc / 1000))))
-                                #Old style: (May use as a backup)
-                                #workingout = round((waittime / 1000) - float(calc / 1000), 3)
-                                #Player.Message(str(workingout) + " seconds remaining before you can use this.")
                     else:
                         Player.Message("You don't have permission to use this command!")
                 elif args[0] == "advanced":
-                    if UserPerms[Player.SteamID + ":" + "LVL2VKIT"] or Player.Admin:
+                    if self.CheckPerm(Player.SteamID, "LVL2VKIT") or Player.Admin:
                         count = len(VKIT2)
                         if Player.Inventory.FreeSlots <= count:
                             Player.Message("You need atleast " + str(count) + " free spaces!")
@@ -596,10 +603,17 @@ class DonatorRank:
  
         elif cmd == "dkit":
             if len(args) == 0:
-                Player.Message("Usage: /dkit [basic / advanced]")
+                if self.CheckPerm(Player.SteamID, "LVL1DKIT") and self.CheckPerm(Player.SteamID, "LVL2DKIT") or Player.Admin:
+                    Player.Message("Usage: /dkit [basic / advanced]")
+                elif self.CheckPerm(Player.SteamID, "LVL1DKIT"):
+                    Player.Message("Usage: /dkit basic")
+                elif self.CheckPerm(Player.SteamID, "LVL2DKIT"):
+                    Player.Message("Usage: /dkit advanced")
+                else:
+                    Player.Message("You don't have permission to use this command!")
             elif len(args) == 1:
                 if args[0] == "basic":
-                    if UserPerms[Player.SteamID + ":" + "LVL1DKIT"] or Player.Admin:
+                    if self.CheckPerm(Player.SteamID, "LVL1DKIT") or Player.Admin:
                         count = len(DKIT1)
                         if Player.Inventory.FreeSlots <= count:
                             Player.Message("You need atleast " + str(count) + " free spaces!")
@@ -622,7 +636,7 @@ class DonatorRank:
                     else:
                         Player.Message("You don't have permission to use this command!")
                 elif args[0] == "advanced":
-                    if UserPerms[Player.SteamID + ":" + "LVL2DKIT"] or Player.Admin:
+                    if self.CheckPerm(Player.SteamID, "LVL2DKIT") or Player.Admin:
                         count = len(DKIT2)
                         if Player.Inventory.FreeSlots <= count:
                             Player.Message("You need atleast " + str(count) + " free spaces!")
@@ -646,7 +660,7 @@ class DonatorRank:
                         Player.Message("You don't have permission to use this command!")
  
         elif cmd == "mkit":
-            if UserPerms[Player.SteamID + ":" + "MODKIT"] or Player.Admin:
+            if self.CheckPerm(Player.SteamID, "MODKIT") or Player.Admin:
                 if len(args) == 0:
                     if Player.Inventory.FreeSlots < 4:
                         Player.Message("You need atleast 4 spots free!")
@@ -670,7 +684,7 @@ class DonatorRank:
                 Player.Message("You don't have permission to use this command!")
 
         elif cmd == "vtp":
-            if UserPerms[Player.SteamID + ":" + "VTP"] or Player.Admin:
+            if self.CheckPerm(Player.SteamID, "VTP") or Player.Admin:
                 if len(args) == 0:
                     Player.Message("Usage: /vtp [Number]")
                     for key in sorted(Vtp.keys()):
@@ -715,7 +729,7 @@ class DonatorRank:
                 Player.Message("You don't have permission to use this command!")
  
         elif cmd == "dtp":
-            if UserPerms[Player.SteamID + ":" + "DTP"] or Player.Admin:
+            if self.CheckPerm(Player.SteamID, "DTP") or Player.Admin:
                 if len(args) == 0:
                     Player.Message("Usage: /dtp [Number]")
                     for key in sorted(Dtp.keys()):
@@ -760,7 +774,7 @@ class DonatorRank:
                 Player.Message("You don't have permission to use this command!")
  
         elif cmd == "mtp":
-            if UserPerms[Player.SteamID + ":" + "MTP"] or Player.Admin: 
+            if self.CheckPerm(Player.SteamID, "MTP") or Player.Admin: 
                 if len(args) > 0:
                     targetname = self.CheckV(Player, args)
                     if targetname is not None:
@@ -786,7 +800,7 @@ class DonatorRank:
                 Player.Message("You don't have permission to use this command!")
  
         elif cmd == "mtpback":
-            if UserPerms[Player.SteamID + ":" + "MTP"] or Player.Admin:
+            if self.CheckPerm(Player.SteamID, "MTP") or Player.Admin:
                 if DataStore.Get("MODLOCATION", Player.SteamID):
                     plocation = DataStore.Get("MODLOCATION", Player.SteamID)
                     Player.TeleportTo(plocation, False)
@@ -798,7 +812,7 @@ class DonatorRank:
                 Player.Message("You don't have permission to use this command!")
  
         elif cmd == "info":
-            if UserPerms[Player.SteamID + ":" + "AccessInfo"] or Player.Admin:
+            if self.CheckPerm(Player.SteamID, "AccessInfo") or Player.Admin:
                 if len(args) > 0:
                     target = self.CheckV(Player, args)
                     if target is not None:
@@ -835,15 +849,73 @@ class DonatorRank:
         else:
             Player.Message("You have been hurt, Failed to teleport!")
 
-    def On_PlayerConnected(self, Player):
+    def UpdatePerms(self):
+        UserPerms.clear()
+        users = self.getUserIni()
+        usercount = 0
+        for steamid in users.Sections:
+            usercount += 1
+            for setting in users.EnumSection(steamid):
+                value = users.GetSetting(steamid, setting)
+                if value == "true" or value == "True":
+                    UserPerms[steamid + ":" + setting] = True
+                elif value == "false" or value == "False":
+                    UserPerms[steamid + ":" + setting] = False
+                else:
+                    UserPerms[steamid + ":" + setting] = value
+        Fougerite.Logger.LogWarning("DonatorRank: Found and loaded " + str(usercount) + " VIP/Donator users successfully!")
+
+    def CheckPerm(self, ID, Perm):
+        try:
+            if UserPerms.has_key(ID + ":" + Perm):
+                permission = UserPerms[ID + ":" + Perm]
+                return permission
+            else:
+                return False
+        except:
+            return False
+
+    def AddData(self, Player):
         try:
             if UserPerms.has_key(Player.SteamID + ":" + "MaxHomes"):
-                DataStore.Add("MaxHomes", Player.SteamID, int(UserPerms[Player.SteamID + ":" + "MaxHomes"]))
+                DataStore.Add("DonatorRank-MaxHomes", Player.SteamID, self.StrToInt(UserPerms[Player.SteamID + ":" + "MaxHomes"], "881"))
             else:
-                DataStore.Add("MaxHomes", Player.SteamID, int(PSettings["PlayerHomesMax"]))
+                DataStore.Add("DonatorRank-MaxHomes", Player.SteamID, PSettings["PlayerHomesMax"])
+            if Player.SteamID == PSettings["OwnerID"]:
+                DataStore.Add("DonatorRank-Cooldown", Player.SteamID, PSettings["MHomeCoolDown"])
+                DataStore.Add("DonatorRank-TpDelay", Player.SteamID, PSettings["MHomeTpDelay"])
+            elif Player.Admin:
+                DataStore.Add("DonatorRank-Cooldown", Player.SteamID, PSettings["MHomeCoolDown"])
+                DataStore.Add("DonatorRank-TpDelay", Player.SteamID, PSettings["MHomeTpDelay"])
+            elif self.isMod(Player):
+                DataStore.Add("DonatorRank-Cooldown", Player.SteamID, PSettings["MHomeCoolDown"])
+                DataStore.Add("DonatorRank-TpDelay", Player.SteamID, PSettings["MHomeTpDelay"])
+            elif self.isDonator(Player):
+                DataStore.Add("DonatorRank-Cooldown", Player.SteamID, PSettings["DHomeCoolDown"])
+                DataStore.Add("DonatorRank-TpDelay", Player.SteamID, PSettings["DHomeTpDelay"])
+            elif self.isVIP(Player):
+                DataStore.Add("DonatorRank-Cooldown", Player.SteamID, PSettings["VHomeCoolDown"])
+                DataStore.Add("DonatorRank-TpDelay", Player.SteamID, PSettings["VHomeTpDelay"])
+            else:
+                DataStore.Add("DonatorRank-Cooldown", Player.SteamID, PSettings["HomeCoolDown"])
+                DataStore.Add("DonatorRank-TpDelay", Player.SteamID, PSettings["HomeTpDelay"])
         except:
-            Fougerite.Logger.LogError("DonatorRank: Failed to add joining user's info into DataStore")
+            DataStore.Add("DonatorRank-MaxHomes", Player.SteamID, PSettings["PlayerHomesMax"])
+            DataStore.Add("DonatorRank-Cooldown", Player.SteamID, PSettings["HomeCoolDown"])
+            DataStore.Add("DonatorRank-TpDelay", Player.SteamID, PSettings["HomeTpDelay"])
+
+    def DelData(self, Player):
+        try:
+            DataStore.Remove("DonatorRank-MaxHomes", Player.SteamID)
+            DataStore.Remove("DonatorRank-Cooldown", Player.SteamID)
+            DataStore.Remove("DonatorRank-TpDelay", Player.SteamID)
+            DataStore.Remove("MaxHomes", Player.SteamID)
+            DataStore.Remove("MODLOCATION", Player.SteamID)
+        except:
             pass
+
+    def On_PlayerConnected(self, Player):
+        self.AddData(Player)
         try:
             if PSettings["JoinMSG"]:
                 if Player.SteamID == PSettings["OwnerID"]:
@@ -863,9 +935,8 @@ class DonatorRank:
             pass
  
     def On_PlayerDisconnected(self, Player):
+        self.DelData(Player)
         try:
-            DataStore.Remove("MaxHomes", Player.SteamID)
-            DataStore.Remove("MODLOCATION", Player.SteamID)
             if PSettings["LeaveMSG"]:
                 if Player.SteamID == PSettings["OwnerID"]:
                     Server.BroadcastFrom("Owner", Player.Name + " is now Offline.")
@@ -894,7 +965,6 @@ class DonatorRank:
                     ocolour = PSettings["OwnerColour"]
                     Server.BroadcastFrom("[Owner]♚" + Player.Name, ocolour + chatmsg)
                     ChatMessage.NewText = "*%"
-                    #Having these to replace the chat message seems to stop errors in the console
                     return
                 elif Player.Admin:
                     chatmsg = str(ChatMessage)[1:-1]
@@ -928,9 +998,9 @@ class DonatorRank:
 
     def isMod(self, Player):
         try:
-            if UserPerms[Player.SteamID + ":" + "Rank"] == "Mod":
+            if self.CheckPerm(Player.SteamID, "Rank") == "Mod":
                 return True
-            elif DataStore.ContainsKey("Moderators", Player.SteamID) or Player.Moderator:
+            elif Player.Moderator:
                 ini = self.getUserIni()
                 d = Plugin.GetDate()
                 t = Plugin.GetTime()
@@ -964,7 +1034,7 @@ class DonatorRank:
  
     def isDonator(self, Player):
         try:
-            if UserPerms[Player.SteamID + ":" + "Rank"] == "Donator":
+            if self.CheckPerm(Player.SteamID, "Rank") == "Donator":
                 return True
             else:
                 return False
@@ -973,7 +1043,7 @@ class DonatorRank:
  
     def isVIP(self, Player):
         try:
-            if UserPerms[Player.SteamID + ":" + "Rank"] == "VIP":
+            if self.CheckPerm(Player.SteamID, "Rank") == "VIP":
                 return True
             else:
                 return False
@@ -1001,6 +1071,12 @@ class DonatorRank:
     def argsToText(self, args):
         text = str.join(" ", args)
         return text
+
+    def StrToInt(self, string, line):
+        try:
+            return int(float(str(string)))
+        except:
+            Fougerite.Logger.LogError("DonatorRank: Error converting string to int [Line: " + line + "]")
  
     #Method provided by Spoock. Converted to Python by DreTaX
     def CheckV(self, Player, args):
