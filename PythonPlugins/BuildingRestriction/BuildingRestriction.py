@@ -1,6 +1,6 @@
 __title__ = 'BuildingRestriction'
 __author__ = 'Jakkee'
-__version__ = '1.0.2'
+__version__ = '1.0.3'
 
 import clr
 clr.AddReferenceByPartialName("Fougerite")
@@ -30,9 +30,9 @@ class BuildingRestriction:
         PluginSettings["ModBypass"] = ini.GetBoolSetting("Config", "Moderators bypass limits?")
         PluginSettings["AdminBypass"] = ini.GetBoolSetting("Config", "Admins bypass limits?")
 
-    def isMod(self, id):
+    def isMod(self, ActualPlacer):
         try:
-            if DataStore.ContainsKey("Moderators", Player.SteamID) or Player.Moderator:
+            if DataStore.ContainsKey("Moderators", ActualPlacer.SteamID) or ActualPlacer.Moderator:
                 if PluginSettings["ModBypass"]:
                     return True
                 else:
@@ -42,9 +42,9 @@ class BuildingRestriction:
         except:
             return False
 
-    def isAdmin(self, p):
+    def isAdmin(self, ActualPlacer):
         try:
-            if p.Admin:
+            if ActualPlacer.Admin:
                 if PluginSettings["AdminBypass"]:
                     return True
                 else:
@@ -54,11 +54,11 @@ class BuildingRestriction:
         except:
             return False
 
-    def On_EntityDeployed(self, Player, Entity):
+    def On_EntityDeployed(self, Player, Entity, ActualPlacer):
         if Entity.Name == "WoodPillar":
-            if self.isAdmin(Player):
+            if self.isAdmin(ActualPlacer):
                 return
-            elif self.isMod(Player):
+            elif self.isMod(ActualPlacer):
                 return
             else:
                 height = round(PluginSettings["Max WoodHeight"], 0)
@@ -66,19 +66,19 @@ class BuildingRestriction:
                     if ent.Name == "WoodFoundation":
                         if height < Entity.Y - ent.Y:
                             try:
-                                Player.Inventory.AddItem("Wood Pillar", 1)
-                                Player.InventoryNotice("1 x " + Entity.Name)
+                                ActualPlacer.Inventory.AddItem("Wood Pillar", 1)
+                                ActualPlacer.InventoryNotice("1 x " + Entity.Name)
                                 Entity.Destroy()
-                                Player.Message("Max build height reached for this base [ " + str(PluginSettings["Max WoodHeight"] / 4) + " units tall ]")
+                                ActualPlacer.Message("Max build height reached for this base [ " + str(PluginSettings["Max WoodHeight"] / 4) + " units tall ]")
                             except:
                                 break
                             break
                         else:
                             continue
         elif Entity.Name == "MetalPillar":
-            if self.isAdmin(Player):
+            if self.isAdmin(ActualPlacer):
                 return
-            elif self.isMod(Player):
+            elif self.isMod(ActualPlacer):
                 return
             else:
                 height = round(PluginSettings["Max MetalHeight"], 0)
@@ -86,19 +86,19 @@ class BuildingRestriction:
                     if ent.Name == "MetalFoundation":
                         if height < Entity.Y - ent.Y:
                             try:
-                                Player.Inventory.AddItem("Metal Pillar", 1)
-                                Player.InventoryNotice("1 x " + Entity.Name)
+                                ActualPlacer.Inventory.AddItem("Metal Pillar", 1)
+                                ActualPlacer.InventoryNotice("1 x " + Entity.Name)
                                 Entity.Destroy()
-                                Player.Message("Max build height reached for this base [ " + str(PluginSettings["Max MetalHeight"] / 4) + " units tall ]")
+                                ActualPlacer.Message("Max build height reached for this base [ " + str(PluginSettings["Max MetalHeight"] / 4) + " units tall ]")
                             except:
                                 break
                             break
                         else:
                             continue
         elif Entity.Name == "WoodFoundation":
-            if self.isAdmin(Player):
+            if self.isAdmin(ActualPlacer):
                 return
-            elif self.isMod(Player):
+            elif self.isMod(ActualPlacer):
                 return
             else:
                 count = 0
@@ -108,19 +108,19 @@ class BuildingRestriction:
                         count += 1
                         if count == total:
                             try:
-                                Player.Inventory.AddItem("Wood Foundation", 1)
-                                Player.InventoryNotice("1 x " + Entity.Name)
+                                ActualPlacer.Inventory.AddItem("Wood Foundation", 1)
+                                ActualPlacer.InventoryNotice("1 x " + Entity.Name)
                                 Entity.Destroy()
-                                Player.Message("Max foundations reached for this base [ " + str(PluginSettings["Max WoodFoundations"]) + " Foundations ]")
+                                ActualPlacer.Message("Max foundations reached for this base [ " + str(PluginSettings["Max WoodFoundations"]) + " Foundations ]")
                             except:
                                 break
                             break
                     else:
                         continue
         elif Entity.Name == "MetalFoundation":
-            if self.isAdmin(Player):
+            if self.isAdmin(ActualPlacer):
                 return
-            elif self.isMod(Player):
+            elif self.isMod(ActualPlacer):
                 return
             else:
                 count = 0
@@ -130,10 +130,10 @@ class BuildingRestriction:
                         count += 1
                         if count == total:
                             try:
-                                Player.Inventory.AddItem("Metal Foundation", 1)
-                                Player.InventoryNotice("1 x " + Entity.Name)
+                                ActualPlacer.Inventory.AddItem("Metal Foundation", 1)
+                                ActualPlacer.InventoryNotice("1 x " + Entity.Name)
                                 Entity.Destroy()
-                                Player.Message("Max foundations reached for this base [ " + str(PluginSettings["Max MetalFoundations"]) + " Foundations ]")
+                                ActualPlacer.Message("Max foundations reached for this base [ " + str(PluginSettings["Max MetalFoundations"]) + " Foundations ]")
                             except:
                                 break
                             break
