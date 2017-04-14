@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading;
 using RustBuster2016Server;
 using UnityEngine;
 
@@ -19,7 +18,6 @@ namespace AdminPlus
         private List<string> ToggledUsers = new List<string> { "a0e1f8200a5f22f49567f527fd53d022791b1b8f" };
         private List<string> OnDutyUsers = new List<string> { "a0e1f8200a5f22f49567f527fd53d022791b1b8f" };
         private Dictionary<String, Vector3> TeleportData = new Dictionary<string, Vector3> { };
-        //public static System.IO.StreamWriter file;
 
         #region Plugin Info
 
@@ -51,7 +49,7 @@ namespace AdminPlus
         {
             get
             {
-                return new Version("2.0");
+                return new Version("2.0.1");
             }
         }
 
@@ -315,7 +313,8 @@ namespace AdminPlus
                                 {
                                     TeleportData.Add(hwid, player.Location);
                                 }
-                                player.SafeTeleportTo(Util.GetUtil().Infront(target, Admin_TP_Distance));
+                                Vector3 loc = Util.GetUtil().Infront(target, Admin_TP_Distance);
+                                player.TeleportTo(loc.x, loc.y, loc.z);
                                 player.MessageFrom("AdminPlus", "Teleported: " + Admin_TP_Distance.ToString() + "m infront of " + target.Name);
                                 player.MessageFrom("AdminPlus", "Use /tpback to go back to your last location");
                             }
@@ -344,7 +343,8 @@ namespace AdminPlus
                         string hwid = GetHWID(player);
                         if (TeleportData.ContainsKey(hwid))
                         {
-                            player.SafeTeleportTo(TeleportData[hwid]);
+                            Vector3 loc = TeleportData[hwid];
+                            player.TeleportTo(loc.x, loc.y, loc.z);
                             TeleportData.Remove(hwid);
                             player.MessageFrom("AdminPlus", "Teleported back!");
                         }
@@ -432,13 +432,20 @@ namespace AdminPlus
 
         public bool CheckDuty(Fougerite.Player player)
         {
-            if (OnDutyUsers.Contains(GetHWID(player)))
+            if (Use_On_Duty)
             {
-                return true;
+                if (OnDutyUsers.Contains(GetHWID(player)))
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
             }
             else
             {
-                return false;
+                return true;
             }
         }
 
@@ -457,20 +464,16 @@ namespace AdminPlus
         public string GetHWID(Fougerite.Player player)
         {
             string hwid = null;
-            new Thread(() =>
+            foreach (API.RustBusterUserAPI obj in API.RustBusterUsersList)
             {
-                Thread.CurrentThread.IsBackground = true;
-                foreach (API.RustBusterUserAPI obj in API.RustBusterUsersList)
+                if (obj.Name == player.Name && obj.SteamID == player.SteamID)
                 {
-                    if (obj.Name == player.Name && obj.SteamID == player.SteamID)
-                    {
-                        hwid = obj.HardwareID;
-                        break;
-                    }
+                    hwid = obj.HardwareID;
+                    break;
                 }
-            }).Start();
+            }
             return hwid;
-        }
+       }
 
         #endregion
 
