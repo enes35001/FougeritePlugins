@@ -9,7 +9,7 @@ namespace AdminPlus
 
         public void Start()
         {
-            Debug.Log("Server sent RPC: " + AdminPlus.Instance.StringToBool(AdminPlus.Instance.SendMessageToServer("GetPlayers-")).ToString());
+            AdminPlus.Instance.SendMessageToServer("GetPlayers-");
         }
 
         [RPC]
@@ -29,22 +29,15 @@ namespace AdminPlus
         }
 
         [RPC]
-        public void AddPlayerToList(Dictionary<string, string> player)
+        public void AddPlayerToList(string hwid, string name)
         {
-            if (player != null && player.Keys.Count > 0)
+            if (AdminPlus.IsAllowed)
             {
-                if (AdminPlus.IsAllowed)
+                if (!AdminPlus.Instance.GetPlayersList.ContainsKey(hwid))
                 {
-                    foreach (string x in player.Keys)
-                    {
-                        if (!AdminPlus.Instance.GetPlayersList.ContainsKey(x))
-                        {
-                            AdminPlus.Instance.PlayersList.Add(x, player[x]);
-                        }
-                    }
+                    AdminPlus.Instance.PlayersList.Add(hwid, name);
                 }
             }
-            
         }
     }
 }

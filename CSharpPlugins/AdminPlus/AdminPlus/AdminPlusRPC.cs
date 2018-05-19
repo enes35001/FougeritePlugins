@@ -1,25 +1,28 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace AdminPlusServer
 {
     public class AdminPlusRPC : MonoBehaviour
     {
-        private AdminPlusServer svr = new AdminPlusServer();
-
-        public void Start()
+        public void SendMessageToPlayer(Fougerite.Player player, string function, string data, string data0)
         {
-            Fougerite.Logger.LogDebug("Starting RPC...");
+            if (player.NetworkPlayer != null && player.PlayerClient?.networkView != null)
+            {
+                uLink.NetworkView.Get(player.PlayerClient.networkView).RPC(function, player.NetworkPlayer, data, data0);
+            }
         }
 
         public void SendMessageToPlayer(Fougerite.Player player, string function, object data)
         {
-            uLink.NetworkView.Get(player.PlayerClient.networkView).RPC(function, player.NetworkPlayer, data);
+            if (player.NetworkPlayer != null && player.PlayerClient?.networkView != null)
+            {
+                uLink.NetworkView.Get(player.PlayerClient.networkView).RPC(function, player.NetworkPlayer, data);
+            }
         }
 
-        public void SendMessageToAll(string function, object data)
+        public void SendMessageToPlayer(Fougerite.Player player, string function, bool data)
         {
-            foreach (Fougerite.Player player in Fougerite.Server.GetServer().Players)
+            if (player.NetworkPlayer != null && player.PlayerClient?.networkView != null)
             {
                 uLink.NetworkView.Get(player.PlayerClient.networkView).RPC(function, player.NetworkPlayer, data);
             }

@@ -708,7 +708,7 @@ namespace AdminPlus
         {
             GUILayout.BeginVertical();
             Dictionary<string, string> dict = AdminPlus.Instance.GetPlayersList;
-            if (dict.Count > 0)
+            if (dict.Keys.Count > 0)
             {
                 scrollposition = GUILayout.BeginScrollView(scrollposition, GUILayout.Width((Screen.width / 2) - 30), GUILayout.Height(Screen.height - 130));
                 foreach (string HWID in AdminPlus.Instance.GetPlayersList.Keys)
@@ -725,6 +725,8 @@ namespace AdminPlus
             }
             else
             {
+                GUILayout.Label("Looks like the server hasn't sent you any RPCs");
+                GUILayout.Label("Not to worry, I'll add you to the list");
                 if (GUILayout.Button(Hooks.PlayerName + " = " + Hooks.HWID))
                 {
                     LookupName = Hooks.PlayerName;

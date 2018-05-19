@@ -8,13 +8,9 @@ namespace AdminPlus
     public class AdminPlus : RustBusterPlugin
     {
         public static AdminPlus Instance;
-        //private GameObject wobj;
         private GameObject obj;
         private AdminPlusGUI GUI;
-        //private AdminPlusWaiter waiter;
         private AdminPlusRPC rpc;
-
-        //internal bool WaitingForCharacter = true;
 
         internal Dictionary<string, string> PlayersList = new Dictionary<string, string>();
 
@@ -33,7 +29,7 @@ namespace AdminPlus
 
         public override Version Version
         {
-            get { return new Version("3.0.1"); }
+            get { return new Version("3.1.0"); }
         }
 
         public override void DeInitialize()
@@ -62,22 +58,32 @@ namespace AdminPlus
         public void StartPlugin()
         {
             IsAllowed = StringToBool(this.SendMessageToServer("IsAllowed-"));
+            if (rpc == null && GUI == null)
+            {
+                if (GUI != null)
+                {
+                    UnityEngine.Object.Destroy(GUI);
+                }
+                obj = new GameObject();
+                GUI = obj.AddComponent<AdminPlusGUI>();
+                UnityEngine.Object.DontDestroyOnLoad(GUI);
 
-            obj = new GameObject();
-            GUI = obj.AddComponent<AdminPlusGUI>();
-            UnityEngine.Object.DontDestroyOnLoad(GUI);
-
-            if (rpc != null)
-            {
-                UnityEngine.Object.Destroy(rpc);
+                if (rpc != null)
+                {
+                    UnityEngine.Object.Destroy(rpc);
+                }
+                try
+                {
+                    rpc = PlayerClient.GetLocalPlayer().gameObject.AddComponent<AdminPlusRPC>();
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError(ex.Message);
+                }
             }
-            try
+            else
             {
-                rpc = PlayerClient.GetLocalPlayer().gameObject.AddComponent<AdminPlusRPC>();
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError(ex.Message);
+                Debug.Log("AdminPlus UI and RPC's are already loaded!");
             }
         }
 
@@ -89,10 +95,7 @@ namespace AdminPlus
                 switch (message[1])
                 {
                     case "load":
-                        if (rpc == null && GUI == null)
-                        {
-                            StartPlugin();
-                        } 
+                        StartPlugin();
                         break;
                 }
             }

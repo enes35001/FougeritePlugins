@@ -16,7 +16,7 @@ namespace AdminPlusServer
         internal Dictionary<string, Vector3> LastUserLocation = new Dictionary<string, Vector3>();
         internal List<string> AllowedToUse = new List<string>();
         internal List<string> DestroyMode = new List<string>();
-        internal List<string> onlineplayers = new List<string>();
+        internal Dictionary<string, string> onlineplayers = new Dictionary<string, string>();
         internal IniParser Boundini;
         internal RustPPExtension rpp = new RustPPExtension();
         //HWID - SLOT - ITEM NAME - QTY
@@ -44,7 +44,7 @@ namespace AdminPlusServer
 
         public override Version Version
         {
-            get { return new Version("3.0.1"); }
+            get { return new Version("3.1.0"); }
         }
 
         public override void DeInitialize()
@@ -159,31 +159,10 @@ namespace AdminPlusServer
                             case "GetPlayers":
                                 if (split.Length == 2)
                                 {
-                                    Dictionary<string, string> temp = new Dictionary<string, string>();
-                                    List<Fougerite.Player> here = Fougerite.Server.GetServer().Players;
-                                    try
+                                    Dictionary<string, string> list = GetOnlinePlayers;
+                                    foreach (string hwid in list.Keys)
                                     {
-                                        if (here.Count > 0)
-                                        {
-                                            foreach (Fougerite.Player player in here)
-                                            {
-                                                if (player.SteamID != SenderPlayer.SteamID)
-                                                {
-                                                    temp.Add(GetHWIDFromSteamID(player.SteamID), player.Name);
-                                                }
-                                                else
-                                                {
-                                                    temp.Add(user.HardwareID, user.Name);
-                                                }
-                                            }
-                                            rpc.SendMessageToPlayer(SenderPlayer, "AddPlayerToList", temp);
-                                            msgc.ReturnMessage = "yes";
-                                        }
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        Fougerite.Server.GetServer().Broadcast(ex.StackTrace);
-                                        Fougerite.Server.GetServer().Broadcast(ex.Message);
+                                        rpc.SendMessageToPlayer(SenderPlayer, "AddPlayerToList", hwid, list[hwid]);
                                     }
                                 }
                                 break;
@@ -734,7 +713,6 @@ namespace AdminPlusServer
         public void OnPlayerConnected(Fougerite.Player player)
         {
             player.SendConsoleMessage("adminplus.load");
-            onlineplayers.Add(GetHWIDFromSteamID(player.SteamID));
         }
 
         public void OnPlayerApproval(Fougerite.Events.PlayerApprovalEvent approvalEvent)
@@ -744,11 +722,11 @@ namespace AdminPlusServer
             string username = approvalEvent.ClientConnection.UserName;
             if (HWID != null)
             {
-                if (_boundSteamIDs.ContainsValue(HWID))
+                if (BoundSteamIDs.ContainsValue(HWID))
                 {
-                    if (_boundSteamIDs.ContainsKey(id))
+                    if (BoundSteamIDs.ContainsKey(id))
                     {
-                        if (_boundSteamIDs[id] == HWID)
+                        if (BoundSteamIDs[id] == HWID)
                         {
                             Logger.LogDebug("AdminPlus: " + username + " passed SteamID and HWID check");
                         }
@@ -793,6 +771,26 @@ namespace AdminPlusServer
                     thread.Start();
                     Logger.LogDebug("AdminPlus: " + username + " is a new player, Binding SteamID and HWID together");
                 }
+
+                Thread Trpc = new Thread(() =>
+                {
+                    Dictionary<string, string> list = GetOnlinePlayers;
+                    if (!list.ContainsKey(HWID))
+                    {
+                        onlineplayers.Add(HWID, username);
+                    }
+                    foreach (Fougerite.Player player in Fougerite.Server.GetServer().Players)
+                    {
+                        foreach (string hwid in list.Keys)
+                        {
+                            rpc.SendMessageToPlayer(player, "AddPlayerToList", hwid, list[hwid]);
+                        }
+                    }
+                })
+                {
+                    IsBackground = true
+                };
+                Trpc.Start();
             }
         }
 
@@ -820,22 +818,36 @@ namespace AdminPlusServer
 
         public void OnPlayerDisconnected(Fougerite.Player notused)
         {
-            List<string> players = new List<string>();
-            foreach (Fougerite.Player player in Fougerite.Server.GetServer().Players)
+            Thread thread = new Thread(() =>
             {
-                players.Add(GetHWIDFromSteamID(player.SteamID));
-            }
-
-            var offline = players.Except(onlineplayers);
-            foreach (string hwid in offline)
-            {
-                Logger.Log(hwid);
-                rpc.SendMessageToAll("RemovePlayerFromList", hwid);
-                if (AdminInventory.ContainsKey(hwid))
+                List<string> players = new List<string>();
+                List<Fougerite.Player> playerslist = Fougerite.Server.GetServer().Players;
+                foreach (Fougerite.Player player in playerslist)
                 {
-                    Fougerite.Server.GetServer().BroadcastNotice(notused.Name + " has gone off duty!");
+                    if (player != notused)
+                    {
+                        players.Add(GetHWIDFromSteamID(player.SteamID));
+                    }
                 }
-            }
+
+                IEnumerable<string> offline = GetOnlinePlayers.Keys.Except(players);
+                foreach (string hwid in offline)
+                {
+                    if (AdminInventory.ContainsKey(hwid))
+                    {
+                        Fougerite.Server.GetServer().BroadcastNotice(onlineplayers[hwid] + " has gone off duty!");
+                    }
+                    onlineplayers.Remove(hwid);
+                    foreach (Fougerite.Player player in playerslist)
+                    {
+                        rpc.SendMessageToPlayer(player, "RemovePlayerFromList", hwid);
+                    }
+                }
+            })
+            {
+                IsBackground = true
+            };
+            thread.Start();
         }
 
         internal string ToBase64(string text)
@@ -916,7 +928,7 @@ namespace AdminPlusServer
         {
             get
             {
-                return _boundSteamIDs;
+                return new Dictionary<string, string>(_boundSteamIDs);
             }
         }
 
@@ -930,11 +942,19 @@ namespace AdminPlusServer
             return temp;
         }
 
+        public Dictionary<string, string> GetOnlinePlayers
+        {
+            get
+            {
+                return new Dictionary<string, string>(onlineplayers);
+            }
+        }
+
         private void BoundIniToList()
         {
             foreach (string key in Boundini.EnumSection("BoundIDandHWID"))
             {
-                BoundSteamIDs.Add(key, Boundini.GetSetting("BoundIDandHWID", key));
+                _boundSteamIDs.Add(key, Boundini.GetSetting("BoundIDandHWID", key));
             }
         }
 
