@@ -3,24 +3,27 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading;
+using UnityEngine;
 
 namespace CountryBlackList
 {
     public class CountryBlackList : Fougerite.Module
     {
-        public bool Show_Accept_Message = true;
-        public bool Show_Denied_Message = true;
-        public bool Use_WhiteList = true;
-        public bool Log_TimedOut_Connections = true;
-        public string Join_Message = "%PLAYER% has connected from %COUNTRY%";
-        public string Player_Disconnect_Message = "%COUNTRY% is on the servers blacklist";
-        public string Server_Disconnect_Message = "%PLAYER% has connected from %COUNTRY% but is blacklisted";
-        public string Unknown_Location = "Unknown Location";
-        public List<string> BlackList = new List<string> { "TK", "JO" };
-        public IniParser Settings;
-        public IniParser WhiteList;
-        public static System.IO.StreamWriter file;
+        internal bool Show_Accept_Message = true;
+        internal bool Show_Denied_Message = true;
+        internal bool Use_WhiteList = true;
+        internal bool Log_TimedOut_Connections = true;
+        internal string Join_Message = "%PLAYER% has connected from %COUNTRY%";
+        internal string Player_Disconnect_Message = "%COUNTRY% is on the servers blacklist";
+        internal string Server_Disconnect_Message = "%PLAYER% has connected from %COUNTRY% but is blacklisted";
+        internal string Unknown_Location = "Unknown Location";
+        internal List<string> BlackList = new List<string> { "TK", "JO" };
+        internal IniParser Settings;
+        internal IniParser WhiteList;
+        internal System.IO.StreamWriter file;
+        private static CountryBlackList _inst;
+        private GameObject GameO;
+        private CountryBlackListMono Handler;
 
         public override string Name
         {
@@ -34,7 +37,7 @@ namespace CountryBlackList
         {
             get
             {
-                return "[DEBUG BUILD]Jakkee";
+                return "Jakkee & DreTaX";
             }
         }
 
@@ -42,7 +45,7 @@ namespace CountryBlackList
         {
             get
             {
-                return "[DEBUG BUILD]Block any country you wish";
+                return "Block any country you wish";
             }
         }
 
@@ -50,18 +53,43 @@ namespace CountryBlackList
         {
             get
             {
-                return new Version("3.0.1");
+                return new Version("3.1.0");
+            }
+        }
+
+        public static CountryBlackList Instance
+        {
+            get
+            {
+                return _inst;
             }
         }
 
         public override void Initialize()
         {
-            //DEBUG
-            Logger.Log("Main ID: " + Util.GetUtil().MainThreadID);
-            Logger.Log("Current ID: " + Util.GetUtil().CurrentWorkingThreadID);
-            //END OF DEBUG
+            _inst = this;
             Hooks.OnCommand += new Hooks.CommandHandlerDelegate(On_Command);
             Hooks.OnPlayerConnected += new Hooks.ConnectionHandlerDelegate(On_PlayerConnected);
+            ReloadConfig();
+
+            GameO = new GameObject();
+            Handler = GameO.AddComponent<CountryBlackListMono>();
+            UnityEngine.Object.DontDestroyOnLoad(GameO);
+        }
+
+        public override void DeInitialize()
+        {
+            Hooks.OnCommand -= new Hooks.CommandHandlerDelegate(On_Command);
+            Hooks.OnPlayerConnected -= new Hooks.ConnectionHandlerDelegate(On_PlayerConnected);
+            if (GameO != null)
+            {
+                UnityEngine.Object.Destroy(GameO);
+                GameO = null;
+            }
+        }
+
+        private void ReloadConfig()
+        {
             if (!File.Exists(Path.Combine(ModuleFolder, "Settings.ini")))
             {
                 File.Create(Path.Combine(ModuleFolder, "Settings.ini")).Dispose();
@@ -77,10 +105,8 @@ namespace CountryBlackList
                 Settings.AddSetting("Messages", "Server Disconnect Message", "%PLAYER% has connected from %COUNTRY% but is blacklisted");
                 Settings.Save();
             }
-            else
-            {
-                Settings = new IniParser(Path.Combine(ModuleFolder, "Settings.ini"));
-            }
+            Settings = new IniParser(Path.Combine(ModuleFolder, "Settings.ini"));
+
             try
             {
                 Show_Accept_Message = Boolean.Parse(Settings.GetSetting("Settings", "Show Accepted Message"));
@@ -105,7 +131,8 @@ namespace CountryBlackList
                 Server_Disconnect_Message = "%PLAYER% has connected from %COUNTRY% but is blacklisted";
                 Unknown_Location = "Unknown Location";
                 BlackList = "TK, JO".Replace(" ", "").Split(',').ToList();
-    }
+            }
+
             if (!File.Exists(Path.Combine(ModuleFolder, "WhiteList.ini")))
             {
                 File.Create(Path.Combine(ModuleFolder, "WhiteList.ini")).Dispose();
@@ -114,16 +141,7 @@ namespace CountryBlackList
                 WhiteList.AddSetting("76561198135558142", "127.0.0.1", "Xiled Jakkee");
                 WhiteList.Save();
             }
-            else
-            {
-                WhiteList = new IniParser(Path.Combine(ModuleFolder, "WhiteList.ini"));
-            }
-        }
-
-        public override void DeInitialize()
-        {
-            Hooks.OnCommand -= new Hooks.CommandHandlerDelegate(On_Command);
-            Hooks.OnPlayerConnected -= new Hooks.ConnectionHandlerDelegate(On_PlayerConnected);
+            WhiteList = new IniParser(Path.Combine(ModuleFolder, "WhiteList.ini"));
         }
 
         public void On_Command(Fougerite.Player player, string cmd, string[] args)
@@ -194,6 +212,15 @@ namespace CountryBlackList
                     player.MessageFrom("CountryBlackList", "You are not allowed to use this command!");
                 }
             }
+            else if (cmd == "cbreload")
+            {
+                if (player.Admin)
+                {
+                    player.MessageFrom("CountryBlackList", "Reloading config...");
+                    ReloadConfig();
+                    player.MessageFrom("CountryBlackList", "Done");
+                }
+            }
         }
 
         public bool OnWhiteList(string playerid, string playerip)
@@ -214,67 +241,7 @@ namespace CountryBlackList
 
         public void On_PlayerConnected(Fougerite.Player player)
         {
-            new Thread(() =>
-            {
-                Thread.CurrentThread.IsBackground = true;
-                Threaded_PlayerConnected(player);
-            }).Start();
-        }
-
-        public void Threaded_PlayerConnected(Fougerite.Player player)
-        {
-            //DEBUG
-            Logger.Log("Thread ID: " + Util.GetUtil().CurrentWorkingThreadID);
-            //END OF DEBUG
-            var data = GeoIP.GeoIP.Instance.GetDataOfIP(player.IP);
-            if (data == null)
-            {
-                if (Show_Accept_Message)
-                {
-                    string message = Join_Message.Replace("%PLAYER%", player.Name).Replace("%COUNTRY%", Unknown_Location);
-                    Server.GetServer().BroadcastFrom("CountryBlackList", message);
-                }
-                if (Log_TimedOut_Connections)
-                {
-                    file = new System.IO.StreamWriter(Path.Combine(ModuleFolder, "TimedOut Connections.log"), true);
-                    file.WriteLine(DateTime.Now + ": " + player.SteamID + "=" + player.Name + " [" + player.IP + "]");
-                    file.Close();
-                }
-                return;
-            }
-            string countrycode = data.CountryShort;
-            if (BlackList.Any(countrycode.Contains))
-            {
-                if (Use_WhiteList)
-                {
-                    if (OnWhiteList(player.SteamID, player.IP))
-                    {
-                        if (Show_Accept_Message)
-                        {
-                            string message = Join_Message.Replace("%PLAYER%", player.Name).Replace("%COUNTRY%", data.Country);
-                            Server.GetServer().BroadcastFrom("CountryBlackList", message);
-                        }
-                        return;
-                    }
-                }
-                if (Show_Denied_Message)
-                {
-                    string message = Server_Disconnect_Message.Replace("%PLAYER%", player.Name).Replace("%COUNTRY%", data.Country);
-                    Server.GetServer().BroadcastFrom("CountryBlackList", message);
-                }
-                player.MessageFrom("CountryBlackList", Player_Disconnect_Message.Replace("%PLAYER%", player.Name).Replace("%COUNTRY%", data.Country));
-                player.Disconnect();
-            }
-            else
-            {
-                if (Show_Accept_Message)
-                {
-                    string message = Join_Message.Replace("%PLAYER%", player.Name).Replace("%COUNTRY%", data.Country);
-                    Server.GetServer().BroadcastFrom("CountryBlackList", message);
-                }
-                return;
-            }
+            Handler.HandleGeoIPRequest(player);
         }
     }
 }
-
